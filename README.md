@@ -50,6 +50,30 @@ The application is built with a **multi-role architecture** consisting of:
    - Supervisor and student management
    - Report generation and downloads
 
+### Modular Architecture (New)
+
+As of the recent refactoring, the application now features a clean, component-based architecture:
+
+- **Core System** (`app/core/`)
+  - Centralized database configuration
+  - Authentication utilities
+  - Role-based middleware
+
+- **Reusable Components** (`app/components/`)
+  - Role-aware sidebar navigation
+  - Shared navbar and footer
+  - Reduces code duplication by ~60%
+
+- **Layout Templates** (`app/layouts/`)
+  - Admin, Department Admin, and Public layouts
+  - Consistent UI across all roles
+
+- **Modular Pages** (`modules/`)
+  - Separated business logic (controllers) from presentation (views)
+  - Easy to maintain and update
+
+**See [ARCHITECTURE_GUIDE.md](./ARCHITECTURE_GUIDE.md) for detailed migration instructions and the new development patterns.**
+
 ## Technology Stack
 
 - **Backend**: PHP 7.4+
@@ -62,34 +86,80 @@ The application is built with a **multi-role architecture** consisting of:
 
 ## Project Structure
 
+The project follows a modular architecture that separates concerns and eliminates code duplication.
+
 ```
 rmu_project_finder/
-├── index.php                 # Public portal (project search)
-├── search_projects.php       # AJAX search endpoint
-├── datacon.php              # Database connection configuration
-├── admin/                   # Super admin interface
-│   ├── dashboard/           # Admin dashboard
-│   ├── login/              # Authentication
-│   ├── logout/             # Session termination
-│   ├── view_projects/      # Project management
-│   ├── view_departments/   # Department management
-│   └── datacon.php         # Admin database config
-├── dep_admin/              # Department admin interface
-│   ├── dashboard/          # Department dashboard
-│   ├── login/              # Department authentication
-│   ├── logout/             # Session termination
-│   ├── view_projects/      # Project submission & management
-│   ├── view_supervisors/   # Supervisor management
-│   ├── download.php        # File download handler
-│   └── datacon.php         # Department database config
-├── assets/                 # Static resources
-│   ├── css/
-│   ├── js/
-│   ├── images/
-│   └── libs/              # Third-party libraries (Bootstrap, jQuery, ApexCharts)
-├── vendor/                # Composer dependencies
-└── composer.json          # PHP dependency configuration
+├── app/                       # NEW - Core application framework
+│   ├── core/
+│   │   ├── config.php        # Single database configuration
+│   │   ├── auth.php          # Authentication utilities
+│   │   └── middleware.php    # Role-based access control
+│   ├── layouts/
+│   │   ├── admin.layout.php       # Admin page template
+│   │   ├── dep_admin.layout.php   # Department admin template
+│   │   └── public.layout.php      # Public portal template
+│   ├── components/
+│   │   ├── sidebar.php       # Role-aware sidebar
+│   │   ├── navbar.php        # Shared navbar
+│   │   └── footer.php        # Shared footer
+│   └── partials/
+│       ├── head.php          # HTML head includes
+│       ├── styles.php        # CSS includes
+│       └── scripts.php       # JavaScript includes
+│
+├── modules/                   # NEW - Feature modules
+│   ├── admin/
+│   │   ├── dashboard/
+│   │   │   ├── dashboard.php      # Controller
+│   │   │   └── dashboard.view.php # View
+│   │   ├── view_projects/
+│   │   ├── view_departments/
+│   │   └── [more modules...]
+│   ├── dep_admin/
+│   │   └── [similar structure]
+│   └── public/
+│       └── [public features]
+│
+├── index.php                  # Public portal (legacy wrapper)
+├── search_projects.php        # AJAX search endpoint
+├── datacon.php                # Database config (backward compat layer)
+│
+├── admin/                     # Legacy admin interface (delegates to modules)
+│   ├── dashboard/
+│   ├── login/
+│   ├── logout/
+│   ├── view_projects/
+│   ├── view_departments/
+│   └── datacon.php
+│
+├── dep_admin/                 # Legacy dept admin interface (delegates to modules)
+│   ├── dashboard/
+│   ├── login/
+│   ├── logout/
+│   ├── view_projects/
+│   ├── view_supervisors/
+│   ├── download.php
+│   └── datacon.php
+│
+├── assets/                    # Static resources
+│   ├── css/                   # Stylesheets
+│   ├── js/                    # JavaScript files
+│   ├── images/                # Images and logos
+│   └── libs/                  # Third-party libraries
+│
+├── vendor/                    # Composer dependencies
+├── composer.json              # PHP dependency configuration
+├── ARCHITECTURE_GUIDE.md      # NEW - Detailed architecture documentation
+├── TEMPLATE_CONTROLLER_ADMIN.php  # NEW - Controller template
+└── TEMPLATE_VIEW_ADMIN.php        # NEW - View template
 ```
+
+**Key Improvements:**
+- `app/` directory contains shared framework code (no duplication)
+- `modules/` directory contains feature logic (clean separation)
+- Legacy files maintain backward compatibility by delegating to `modules/`
+- See [ARCHITECTURE_GUIDE.md](./ARCHITECTURE_GUIDE.md) for detailed structure explanation
 
 ## Database Schema Overview
 

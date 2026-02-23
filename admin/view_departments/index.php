@@ -5,7 +5,7 @@ if (!isset($_SESSION['username'])) {
   die();
 }
 
-include "../datacon.php";
+require "../../app/core/config.php";
 
 if (!$conn) {
   die("Connection failed: " . mysqli_connect_error());

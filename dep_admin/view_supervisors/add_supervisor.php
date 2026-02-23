@@ -1,5 +1,5 @@
 <?php
-include "../datacon.php";
+require '../../app/core/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dep_id = $_POST['dep_id'];

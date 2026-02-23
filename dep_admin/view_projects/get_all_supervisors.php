@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "../datacon.php";
+require '../../app/core/config.php';
 
 $dep_id = $_SESSION['dep_id'];
 

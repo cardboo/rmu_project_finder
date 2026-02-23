@@ -7,7 +7,7 @@ if (!isset($_SESSION['username']) || !isset($_GET['id'])) {
     exit;
 }
 
-include "../datacon.php";
+require '../../app/core/config.php';
 
 $project_id = intval($_GET['id']);
 $dep_id = $_SESSION['dep_id']; // Example: "Dep 001"

@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['username'], $_SESSION['dep_id'])) {
-    header("Location: ../dashboard/");
+    header("Location: ../login/");
     exit();
 }
 

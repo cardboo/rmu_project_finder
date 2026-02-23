@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-    header("Location:../dashboard/");
+    header("Location:../login/");
     die();
 }
 
@@ -14,58 +14,57 @@ $depQuery = "SELECT dep_id, dep_name FROM departments ORDER BY dep_name ASC";
 $depResult = $conn->query($depQuery);
 $departments = $depResult->fetch_all(MYSQLI_ASSOC);
 // Build main query for projects
-// $sql = "
-// SELECT 
-//     p.id AS project_id,
-//     p.title,
-//     p.synopsis,
-//     p.year,
-//     p.file_path,
-//     d.dep_name,
+$sql = "
+SELECT
+    p.id AS project_id,
+    p.title,
+    p.synopsis,
+    p.year,
+    p.file_path,
+    d.dep_name,
 
-//     GROUP_CONCAT(DISTINCT CONCAT(pm.student_name, ' (', pm.index_number, ')') SEPARATOR ', ') AS members,
-//     GROUP_CONCAT(DISTINCT CONCAT(s.first_name, ' ', s.last_name) SEPARATOR ', ') AS supervisors,
-//     GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') AS tags
+    GROUP_CONCAT(DISTINCT CONCAT(pm.student_name, ' (', pm.index_number, ')') SEPARATOR ', ') AS members,
+    GROUP_CONCAT(DISTINCT CONCAT(s.first_name, ' ', s.last_name) SEPARATOR ', ') AS supervisors,
+    GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') AS tags
 
-// FROM projects p
+FROM projects p
 
-// LEFT JOIN departments d 
-//     ON p.dep_id = d.dep_id
+LEFT JOIN departments d
+    ON p.dep_id = d.dep_id
 
-// LEFT JOIN project_members pm 
-//     ON p.id = pm.project_id
+LEFT JOIN project_members pm
+    ON p.id = pm.project_id
 
-// LEFT JOIN project_supervisors ps 
-//     ON p.id = ps.project_id
-// LEFT JOIN supervisors s 
-//     ON ps.supervisor_id = s.id
+LEFT JOIN project_supervisors ps
+    ON p.id = ps.project_id
+LEFT JOIN supervisors s
+    ON ps.supervisor_id = s.id
 
-// LEFT JOIN project_tags pt 
-//     ON p.id = pt.project_id
-// LEFT JOIN tags t 
-//     ON pt.tag_id = t.id
-// ";
+LEFT JOIN project_tags pt
+    ON p.id = pt.project_id
+LEFT JOIN tags t
+    ON pt.tag_id = t.id
+";
 
-// if (!empty($filter)) {
-//     $sql .= " WHERE p.dep_id = ? ";
-// }
+if (!empty($filter)) {
+    $sql .= " WHERE p.dep_id = ? ";
+}
 
-// $sql .= "
-// GROUP BY p.id
-// ORDER BY p.year DESC, p.created_at DESC
-// ";
+$sql .= "
+GROUP BY p.id
+ORDER BY p.year DESC, p.created_at DESC
+";
 
-// $stmt = $conn->prepare($sql);
+$stmt = $conn->prepare($sql);
 
-// if (!empty($filter)) {
-//     $stmt->bind_param("s", $filter);
-// }
+if (!empty($filter)) {
+    $stmt->bind_param("s", $filter);
+}
 
-// $stmt->execute();
-// $projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->execute();
+$projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-
-// ?>
+?>
 
 
 
@@ -664,16 +663,23 @@ filters.forEach(id => {
 
 function fetchProjects() {
   const params = new URLSearchParams({
-    department: department.value,
-    year: year.value,
-    q: search.value,
-    sort: sort.value
+    department: document.getElementById('department').value,
+    year: document.getElementById('year').value,
+    q: document.getElementById('search').value,
+    sort: document.getElementById('sort').value
   });
 
   fetch('fetch_projects.php?' + params.toString())
-    .then(res => res.text())
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    })
     .then(html => {
       document.querySelector('tbody').innerHTML = html;
+    })
+    .catch(error => {
+      console.error('Error fetching projects:', error);
+      document.querySelector('tbody').innerHTML = '<tr><td colspan="9" class="text-center">Error loading projects</td></tr>';
     });
 }
 

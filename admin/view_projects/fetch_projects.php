@@ -2,14 +2,13 @@
 session_start();
 require "../datacon.php";
 
-// 🔒 Ensure user is logged in and has a department
-if (!isset($_SESSION['dep_id'])) {
+// Ensure user is logged in as admin
+if (!isset($_SESSION['username'])) {
     exit('Unauthorized');
 }
 
-$dep_id = $_SESSION['dep_id']; // e.g. "Dep 001"
-
 // Optional filters from UI
+$department = $_GET['department'] ?? '';
 $year = $_GET['year'] ?? '';
 $q    = $_GET['q'] ?? '';
 $sort = $_GET['sort'] ?? 'year_desc';
@@ -17,9 +16,15 @@ $sort = $_GET['sort'] ?? 'year_desc';
 // ============================
 // Build WHERE conditions
 // ============================
-$where  = ["p.dep_id = ?"]; // mandatory
-$params = [$dep_id];
-$types  = "s"; // dep_id is VARCHAR
+$where  = [];
+$params = [];
+$types  = "";
+
+if (!empty($department)) {
+    $where[]  = "p.dep_id = ?";
+    $params[] = $department;
+    $types   .= "s";
+}
 
 if ($year !== '') {
     $where[]  = "p.year = ?";
@@ -66,7 +71,7 @@ LEFT JOIN project_supervisors ps ON p.id = ps.project_id
 LEFT JOIN supervisors s ON ps.supervisor_id = s.id
 LEFT JOIN project_tags pt ON p.id = pt.project_id
 LEFT JOIN tags t ON pt.tag_id = t.id
-WHERE " . implode(" AND ", $where) . "
+" . (!empty($where) ? "WHERE " . implode(" AND ", $where) : "") . "
 GROUP BY p.id
 ORDER BY $orderBy
 ";

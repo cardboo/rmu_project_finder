@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-  header("Location:../dashboard/");
+  header("Location:../login/");
   die();
 }
 
@@ -437,9 +437,9 @@ $result = $stmt->get_result();
                         Edit
                     </button>
 
-                    <form action="delete_department.php" method="POST" style="display:inline;">
+                    <form action="archive_department.php" method="POST" style="display:inline;">
                         <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this department?');">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to archive this department?');">
                             Archive
                         </button>
                     </form>

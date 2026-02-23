@@ -191,6 +191,13 @@
 <script>
 let debounceTimer;
 
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 async function searchProjects(query) {
   const resultsDiv = document.getElementById('results');
   resultsDiv.innerHTML = '';
@@ -208,31 +215,27 @@ async function searchProjects(query) {
 
     projects.forEach(project => {
       const tagsHtml = project.tags
-        ? project.tags.split(',').map(tag => `<span class="tag">${tag.trim()}</span>`).join(' ')
+        ? project.tags.split(',').map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join(' ')
         : '';
 
-      const supervisorsHtml = project.supervisors ? project.supervisors : 'N/A';
+      const supervisorsHtml = project.supervisors ? escapeHtml(project.supervisors) : 'N/A';
 
-   
-
-     const projectHtml = `
+      const projectHtml = `
 <div class="project-card">
-  <h3>${project.title}</h3>
-  <p><strong>Department:</strong> ${project.dep_name}</p>
-  <p><strong>Year:</strong> ${project.year}</p>
-  <p><strong>Students:</strong> ${project.student_names}</p>
+  <h3>${escapeHtml(project.title)}</h3>
+  <p><strong>Department:</strong> ${escapeHtml(project.dep_name)}</p>
+  <p><strong>Year:</strong> ${escapeHtml(String(project.year))}</p>
+  <p><strong>Students:</strong> ${escapeHtml(project.student_names)}</p>
+  <p><strong>Supervisors:</strong> ${supervisorsHtml}</p>
   <p><strong>Tags:</strong> ${tagsHtml}</p>
-  <p><strong>Synopsis:</strong> ${project.synopsis}</p>
-  <p><strong>Project Abstract:</strong> 
-   <a href="dep_admin/download.php?file=${project.file_path}"
+  <p><strong>Synopsis:</strong> ${escapeHtml(project.synopsis)}</p>
+  <p><strong>Project Abstract:</strong>
+   <a href="dep_admin/download.php?file=${encodeURIComponent(project.file_path || '')}"
    class="download-btn">
    Download
 </a>
-
-
   </p>
 </div>`;
-
 
       resultsDiv.insertAdjacentHTML('beforeend', projectHtml);
     });

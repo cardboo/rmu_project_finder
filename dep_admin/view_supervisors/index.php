@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-    header("Location:../dashboard/");
+    header("Location:../login/");
     exit();
 }
 
@@ -19,9 +19,13 @@ $departments = $depResult ? $depResult->fetch_all(MYSQLI_ASSOC) : [];
 // Fetch supervisors for display
 $sql = "SELECT s.id, s.first_name, s.last_name, s.email, d.dep_name
         FROM supervisors s
-        LEFT JOIN departments d ON s.dep_id = d.id
+        LEFT JOIN departments d ON s.dep_id = d.dep_id
+        WHERE s.dep_id = ?
         ORDER BY s.id DESC";
-$result = $conn->query($sql);
+$supStmt = $conn->prepare($sql);
+$supStmt->bind_param("s", $dep_id);
+$supStmt->execute();
+$result = $supStmt->get_result();
 $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 <!DOCTYPE html>

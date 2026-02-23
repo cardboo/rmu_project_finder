@@ -27,13 +27,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit();
         } else {
             echo "<script>
-                    alert('Incorrect password.');
+                    alert('Invalid username or password.');
                     window.history.back();
                   </script>";
         }
     } else {
         echo "<script>
-                alert('Username not found.');
+                alert('Invalid username or password.');
                 window.history.back();
               </script>";
     }

@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-    header("Location:../dashboard/");
+    header("Location:../login/");
     die();
 }
 
@@ -673,7 +673,6 @@ while ($row = $projectResult->fetch_assoc()) {
         <!-- File Upload -->
         <div class="mb-3">
           <label class="form-label">Current File: <span id="current_file"></span></label><br>
-          <input type="hidden" name="existing_file_path" id="existing_file_path">
           <label for="edit_project_file" class="form-label">Replace File (PDF ONLY)</label>
           <input type="file" name="project_file" id="edit_project_file" class="form-control" accept=".pdf" />
         </div>

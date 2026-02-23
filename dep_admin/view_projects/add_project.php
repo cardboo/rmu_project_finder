@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-    header("Location: ../dashboard/");
+    header("Location: ../login/");
     exit();
 }
 
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $clean = preg_replace("/[^A-Za-z0-9_\-\.]/", "_", $file_name);
         $new_name = time() . '_' . $clean;
         $destination_dir = __DIR__ . '/../uploads/projects/';
-        if (!is_dir($destination_dir)) mkdir($destination_dir, 0777, true);
+        if (!is_dir($destination_dir)) mkdir($destination_dir, 0755, true);
         $destination = $destination_dir . $new_name;
 
         if (!move_uploaded_file($tmp, $destination)) {

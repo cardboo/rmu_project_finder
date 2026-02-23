@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-    header("Location: ../dashboard/");
+    header("Location: ../login/");
     exit();
 }
 
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_name = time() . "_" . $clean;
 
             $upload_dir = __DIR__ . "/../uploads/projects/";
-            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
 
             $target = $upload_dir . $new_name;
 
@@ -74,10 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare("
         UPDATE projects
         SET title = ?, synopsis = ?, year = ?, file_path = ?
-        WHERE id = ?
+        WHERE id = ? AND dep_id = ?
     ");
 
-   $stmt->bind_param("ssiii", $title, $description, $year, $project_id, $_SESSION['dep_id']);
+   $stmt->bind_param("ssisss", $title, $description, $year, $file_path, $project_id, $_SESSION['dep_id']);
 
     $stmt->execute();
     $stmt->close();
@@ -85,7 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ---------------------------------------------------------------
     // UPDATE SUPERVISORS
     // ---------------------------------------------------------------
-    $conn->query("DELETE FROM project_supervisors WHERE project_id = $project_id");
+    $delSup = $conn->prepare("DELETE FROM project_supervisors WHERE project_id = ?");
+    $delSup->bind_param("i", $project_id);
+    $delSup->execute();
+    $delSup->close();
 
     if (!empty($supervisors)) {
         $ps = $conn->prepare("INSERT INTO project_supervisors (project_id, supervisor_id) VALUES (?, ?)");
@@ -101,7 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ---------------------------------------------------------------
     // UPDATE MEMBERS
     // ---------------------------------------------------------------
-    $conn->query("DELETE FROM project_members WHERE project_id = $project_id");
+    $delMem = $conn->prepare("DELETE FROM project_members WHERE project_id = ?");
+    $delMem->bind_param("i", $project_id);
+    $delMem->execute();
+    $delMem->close();
 
     $mem = $conn->prepare("INSERT INTO project_members (project_id, student_name, index_number) VALUES (?, ?, ?)");
     foreach ($student_names as $i => $name) {
@@ -117,7 +123,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ---------------------------------------------------------------
     // UPDATE TAGS
     // ---------------------------------------------------------------
-    $conn->query("DELETE FROM project_tags WHERE project_id = $project_id");
+    $delTags = $conn->prepare("DELETE FROM project_tags WHERE project_id = ?");
+    $delTags->bind_param("i", $project_id);
+    $delTags->execute();
+    $delTags->close();
 
     foreach ($tags as $tag) {
         if (!$tag) continue;

@@ -86,80 +86,81 @@ As of the recent refactoring, the application now features a clean, component-ba
 
 ## Project Structure
 
-The project follows a modular architecture that separates concerns and eliminates code duplication.
+The project now features a clean, consolidated structure with a single source of truth for configuration and shared components.
 
 ```
 rmu_project_finder/
-├── app/                       # NEW - Core application framework
+├── app/                          # Core application framework
 │   ├── core/
-│   │   ├── config.php        # Single database configuration
-│   │   ├── auth.php          # Authentication utilities
-│   │   └── middleware.php    # Role-based access control
+│   │   ├── config.php            # Single database configuration (used by all modules)
+│   │   ├── auth.php              # Authentication utilities
+│   │   └── middleware.php        # Role-based access control
 │   ├── layouts/
-│   │   ├── admin.layout.php       # Admin page template
-│   │   ├── dep_admin.layout.php   # Department admin template
-│   │   └── public.layout.php      # Public portal template
+│   │   ├── admin.layout.php      # Admin page template
+│   │   ├── dep_admin.layout.php  # Department admin template
+│   │   └── public.layout.php     # Public portal template
 │   ├── components/
-│   │   ├── sidebar.php       # Role-aware sidebar
-│   │   ├── navbar.php        # Shared navbar
-│   │   └── footer.php        # Shared footer
+│   │   ├── sidebar.php           # Role-aware sidebar
+│   │   ├── navbar.php            # Shared navbar
+│   │   └── footer.php            # Shared footer
 │   └── partials/
-│       ├── head.php          # HTML head includes
-│       ├── styles.php        # CSS includes
-│       └── scripts.php       # JavaScript includes
+│       ├── head.php              # HTML head includes
+│       ├── styles.php            # CSS includes
+│       └── scripts.php           # JavaScript includes
 │
-├── modules/                   # NEW - Feature modules
+├── modules/                      # Feature modules (business logic)
 │   ├── admin/
 │   │   ├── dashboard/
-│   │   │   ├── dashboard.php      # Controller
-│   │   │   └── dashboard.view.php # View
-│   │   ├── view_projects/
-│   │   ├── view_departments/
-│   │   └── [more modules...]
+│   │   │   ├── dashboard.php     # Controller - handles data retrieval
+│   │   │   └── dashboard.view.php # View - renders HTML
 │   ├── dep_admin/
-│   │   └── [similar structure]
+│   │   ├── dashboard/
+│   │   │   ├── dashboard.php
+│   │   │   └── dashboard.view.php
 │   └── public/
 │       └── [public features]
 │
-├── index.php                  # Public portal (legacy wrapper)
-├── search_projects.php        # AJAX search endpoint
-├── datacon.php                # Database config (backward compat layer)
+├── index.php                     # Public portal entry point
+├── search_projects.php           # AJAX search endpoint
 │
-├── admin/                     # Legacy admin interface (delegates to modules)
+├── admin/                        # Admin interface
 │   ├── dashboard/
+│   │   └── index.php             # Wrapper → delegates to modules/admin/dashboard
 │   ├── login/
+│   │   ├── index.php             # Login form
+│   │   └── index.inc.php         # Login handler
 │   ├── logout/
 │   ├── view_projects/
-│   ├── view_departments/
-│   └── datacon.php
+│   └── view_departments/
 │
-├── dep_admin/                 # Legacy dept admin interface (delegates to modules)
+├── dep_admin/                    # Department admin interface
 │   ├── dashboard/
+│   │   └── index.php             # Wrapper → delegates to modules/dep_admin/dashboard
 │   ├── login/
+│   │   ├── index.php             # Login form
+│   │   └── index.inc.php         # Login handler
 │   ├── logout/
 │   ├── view_projects/
 │   ├── view_supervisors/
-│   ├── download.php
-│   └── datacon.php
+│   └── download.php
 │
-├── assets/                    # Static resources
-│   ├── css/                   # Stylesheets
-│   ├── js/                    # JavaScript files
-│   ├── images/                # Images and logos
-│   └── libs/                  # Third-party libraries
+├── assets/                       # Static resources
+│   ├── css/
+│   ├── js/
+│   ├── images/
+│   └── libs/                     # Third-party libraries
 │
-├── vendor/                    # Composer dependencies
-├── composer.json              # PHP dependency configuration
-├── ARCHITECTURE_GUIDE.md      # NEW - Detailed architecture documentation
-├── TEMPLATE_CONTROLLER_ADMIN.php  # NEW - Controller template
-└── TEMPLATE_VIEW_ADMIN.php        # NEW - View template
+├── vendor/                       # Composer dependencies
+├── composer.json
+└── README.md
 ```
 
 **Key Improvements:**
-- `app/` directory contains shared framework code (no duplication)
-- `modules/` directory contains feature logic (clean separation)
-- Legacy files maintain backward compatibility by delegating to `modules/`
-- See [ARCHITECTURE_GUIDE.md](./ARCHITECTURE_GUIDE.md) for detailed structure explanation
+- **Single Database Config**: All files use `app/core/config.php` (no more duplicate datacon.php files)
+- **Modular Organization**: Business logic in `modules/`, reusable components in `app/`
+- **Clean Separation**: Controllers handle data, views render HTML
+- **Role-Based Components**: Sidebar, navbar, and footer adapt based on user role
+- **Easy to Extend**: Add new features by creating modules following the established pattern
 
 ## Database Schema Overview
 

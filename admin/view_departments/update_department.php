@@ -1,5 +1,5 @@
 <?php
-require '../datacon.php';
+require '../../app/core/config.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;

@@ -5,7 +5,7 @@ if (!isset($_SESSION['username'])) {
     die();
 }
 
-require "../datacon.php";
+require "../../app/core/config.php";
 
 // Get selected department ID
 $filter = $_GET['department'] ?? '';

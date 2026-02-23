@@ -1,6 +1,6 @@
 <?php
 session_start();
-require "../datacon.php";
+require "../../app/core/config.php";
 
 // 🔒 Ensure user is logged in and has a department
 if (!isset($_SESSION['dep_id'])) {

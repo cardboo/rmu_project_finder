@@ -5,7 +5,7 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-require "../datacon.php";
+require "../../app/core/config.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 

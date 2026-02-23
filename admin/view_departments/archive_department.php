@@ -1,5 +1,5 @@
 <?php
-require '../datacon.php';
+require '../../app/core/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['id']);

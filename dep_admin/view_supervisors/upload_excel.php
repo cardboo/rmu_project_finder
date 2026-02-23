@@ -6,7 +6,7 @@ if (!isset($_SESSION['username'], $_SESSION['dep_id'])) {
     exit();
 }
 
-require "../datacon.php";
+require "../../app/core/config.php";
 require "../../vendor/autoload.php";
 
 use PhpOffice\PhpSpreadsheet\IOFactory;

@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require 'datacon.php'; // adjust the path if needed
+require 'app/core/config.php';
 
 $query = isset($_GET['query']) ? trim($_GET['query']) : '';
 

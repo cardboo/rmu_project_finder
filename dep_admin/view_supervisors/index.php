@@ -6,7 +6,8 @@ if (!isset($_SESSION['username'])) {
 }
 
 require "../datacon.php";
-$dep_id = $_SESSION['dep_id']; 
+require "../csrf.php";
+$dep_id = $_SESSION['dep_id'];
 $dep_name = $_SESSION['dep_name'];
 
 // Fetch departments for dropdown
@@ -439,6 +440,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 <div class="modal fade" id="addSupervisorModal" tabindex="-1" aria-labelledby="addSupervisorLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form action="add_supervisor.php" method="POST" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="addSupervisorLabel">Add A Supervisor</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -483,6 +485,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 <div class="modal fade" id="editSupervisorModal" tabindex="-1" aria-labelledby="editSupervisorModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form id="editSupervisorForm" method="POST" action="update_supervisor.php">
+      <?= csrf_field() ?>
       <input type="hidden" name="supervisor_id" id="edit_supervisor_id" />
       <div class="modal-content">
         <div class="modal-header">
@@ -519,6 +522,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 <div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form action="upload_excel.php" method="POST" enctype="multipart/form-data" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="uploadExcelLabel">Upload Projects Excel</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

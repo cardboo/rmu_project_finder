@@ -7,6 +7,7 @@ if (!isset($_SESSION['username'], $_SESSION['dep_id'])) {
 }
 
 require "../datacon.php";
+require "../csrf.php";
 require "../../vendor/autoload.php";
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -15,6 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: index.php");
     exit();
 }
+
+validate_csrf();
 
 $dep_id = $_SESSION['dep_id'];
 

@@ -6,6 +6,7 @@ if (!isset($_SESSION['username'])) {
 }
 
 include "../datacon.php";
+include "../csrf.php";
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -14,6 +15,7 @@ use PHPMailer\PHPMailer\Exception;
 require '../../vendor/autoload.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validate_csrf();
 
     if (!isset($_FILES['excel_file']) || $_FILES['excel_file']['error'] !== 0) {
         die("Invalid file upload.");

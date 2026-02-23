@@ -1,7 +1,15 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['dep_id'])) {
+    header("Location: ../login/");
+    exit();
+}
+
 include "../datacon.php";
+include "../csrf.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validate_csrf();
     $id = intval($_POST['supervisor_id']);
     $first_name = trim($_POST['first_name']);
     $last_name = trim($_POST['last_name']);
@@ -19,9 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
 
-        $sql = "UPDATE supervisors SET  first_name = ?, last_name = ?, email = ? WHERE id = ?";
+        $dep_id = $_SESSION['dep_id'];
+        $sql = "UPDATE supervisors SET first_name = ?, last_name = ?, email = ? WHERE id = ? AND dep_id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssi",  $first_name, $last_name, $email, $id);
+        $stmt->bind_param("sssis", $first_name, $last_name, $email, $id, $dep_id);
 
         if ($stmt->execute()) {
             echo "<script>alert('Supervisor updated successfully'); window.location.href='index.php';</script>";

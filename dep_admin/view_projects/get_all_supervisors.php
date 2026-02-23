@@ -1,5 +1,13 @@
 <?php
 session_start();
+header('Content-Type: application/json');
+
+if (!isset($_SESSION['username']) || !isset($_SESSION['dep_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
+
 include "../datacon.php";
 
 $dep_id = $_SESSION['dep_id'];

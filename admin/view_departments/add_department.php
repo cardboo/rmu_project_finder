@@ -6,6 +6,7 @@ if (!isset($_SESSION['username'])) {
 }
 
 include "../datacon.php";
+include "../csrf.php";
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -13,6 +14,7 @@ use PHPMailer\PHPMailer\Exception;
 require '../../vendor/autoload.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validate_csrf();
     $dep_id = trim($_POST['dep_id']);
     $dep_name = trim($_POST['dep_name']);
     $username = trim($_POST['username']);

@@ -6,6 +6,7 @@ if (!isset($_SESSION['username'])) {
 }
 
 include "../datacon.php";
+include "../csrf.php";
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
@@ -542,6 +543,7 @@ while ($row = $projectResult->fetch_assoc()) {
 <div class="modal fade" id="addProjectModal" tabindex="-1" aria-labelledby="addProjectLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <form action="add_project.php" method="POST" enctype="multipart/form-data" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="addProjectLabel">Add Past Project</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -635,6 +637,7 @@ while ($row = $projectResult->fetch_assoc()) {
 <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <form id="editProjectForm" action="update_project.php" method="POST" enctype="multipart/form-data" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="editProjectLabel">Edit Project</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

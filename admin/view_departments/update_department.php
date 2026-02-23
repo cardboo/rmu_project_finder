@@ -1,5 +1,12 @@
 <?php
+session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: ../login/");
+    exit();
+}
+
 require '../datacon.php';
+require '../csrf.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -7,6 +14,7 @@ use PHPMailer\PHPMailer\Exception;
 require '../../vendor/autoload.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validate_csrf();
 
     $id       = intval($_POST['id']);
     $dep_id   = trim($_POST['dep_id']);

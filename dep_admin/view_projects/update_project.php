@@ -6,8 +6,10 @@ if (!isset($_SESSION['username'])) {
 }
 
 require "../datacon.php";
+require "../csrf.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validate_csrf();
 
     $project_id = (int)$_POST['project_id'];
     $title = trim($_POST['project_title']);

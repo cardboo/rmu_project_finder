@@ -6,13 +6,15 @@ if (!isset($_SESSION['username'])) {
 }
 
 include "../datacon.php";
+include "../csrf.php";
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dep_id = $_POST['dep_id'];
+    validate_csrf();
+    $dep_id = $_SESSION['dep_id'];
     $title = trim($_POST['project_title']);
     $description = trim($_POST['description']);
     $year = (int)$_POST['year'];

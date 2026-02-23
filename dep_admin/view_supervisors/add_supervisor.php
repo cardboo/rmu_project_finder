@@ -1,8 +1,16 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['dep_id'])) {
+    header("Location: ../login/");
+    exit();
+}
+
 include "../datacon.php";
+include "../csrf.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dep_id = $_POST['dep_id'];
+    validate_csrf();
+    $dep_id = $_SESSION['dep_id'];
     $first_name = trim($_POST['first_name']);
     $last_name = trim($_POST['last_name']);
     $email = trim($_POST['email']);

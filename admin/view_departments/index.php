@@ -6,6 +6,7 @@ if (!isset($_SESSION['username'])) {
 }
 
 include "../datacon.php";
+include "../csrf.php";
 
 if (!$conn) {
   die("Connection failed: " . mysqli_connect_error());
@@ -438,6 +439,7 @@ $result = $stmt->get_result();
                     </button>
 
                     <form action="archive_department.php" method="POST" style="display:inline;">
+                        <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= $row['id'] ?>">
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to archive this department?');">
                             Archive
@@ -460,6 +462,7 @@ $result = $stmt->get_result();
 <div class="modal fade" id="addProjectModal" tabindex="-1" aria-labelledby="addProjectLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form action="add_department.php" method="POST" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="addProjectLabel">Add a Department</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -498,11 +501,12 @@ $result = $stmt->get_result();
 <div class="modal fade" id="editDepartmentModal" tabindex="-1" aria-labelledby="editDepartmentModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form id="editDepartmentForm" method="POST" action="update_department.php" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="editDepartmentModalLabel">Edit Department</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      
+
       <div class="modal-body">
         <input type="hidden" name="id" id="edit_id">
 
@@ -540,6 +544,7 @@ $result = $stmt->get_result();
 <div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form action="upload_excel.php" method="POST" enctype="multipart/form-data" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="uploadExcelLabel">Upload Projects Excel</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

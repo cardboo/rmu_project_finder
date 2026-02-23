@@ -11,50 +11,41 @@
 session_start();
 
 // Load core files
-require_once '../../../app/core/middleware.php';
-require_once '../../../app/core/config.php';
+require_once dirname(__DIR__, 3) . '/app/core/middleware.php';
+require_once dirname(__DIR__, 3) . '/app/core/config.php';
 
 // Require admin role - will redirect if not authorized
 requireAdmin();
 
 // Get username from session
-$username = $_SESSION['username'] ?? 'Administrator';
+$username = $_SESSION['username'];
 
-// Fetch dashboard data
-try {
-    // Total projects
-    $totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects");
-    $totalQuery->execute();
-    $totalProjects = $totalQuery->get_result()->fetch_assoc()['total'] ?? 0;
-    
-    // Total departments
-    $deptQuery = $conn->prepare("SELECT COUNT(*) AS total FROM departments");
-    $deptQuery->execute();
-    $totalDepartments = $deptQuery->get_result()->fetch_assoc()['total'] ?? 0;
-    
-    // Recent projects (limit 5)
-    $recentQuery = $conn->prepare("
-        SELECT p.id, p.title, d.department_name, p.created_at 
-        FROM projects p 
-        LEFT JOIN departments d ON p.department_id = d.id 
-        ORDER BY p.created_at DESC 
-        LIMIT 5
-    ");
-    $recentQuery->execute();
-    $recentProjects = $recentQuery->get_result()->fetch_all(MYSQLI_ASSOC) ?? [];
-    
-} catch (Exception $e) {
-    error_log("Dashboard query error: " . $e->getMessage());
-    $totalProjects = 0;
-    $totalDepartments = 0;
-    $recentProjects = [];
+if (!$conn) {
+  die("Connection failed: " . mysqli_connect_error());
 }
 
-// Set page data
-$pageTitle = "Admin Dashboard";
-$basePath = "../";
-$viewFile = __DIR__ . '/dashboard.view.php';
+// Total projects
+$totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects");
+if (!$totalQuery) {
+  die("Prepare failed: " . $conn->error);
+}
+$totalQuery->execute();
+$totalProjects = $totalQuery->get_result()->fetch_assoc()['total'];
 
-// Load layout which renders the page
-require_once '../../../app/layouts/admin.layout.php';
+// Total departments
+$deptQuery = $conn->prepare("SELECT COUNT(*) AS total FROM departments");
+if (!$deptQuery) {
+  die("Prepare failed: " . $conn->error);
+}
+$deptQuery->execute();
+$totalDepartments = $deptQuery->get_result()->fetch_assoc()['total'];
+
+// Get the view file
+$viewFile = dirname(__FILE__) . '/dashboard.view.php';
+if (!file_exists($viewFile)) {
+  die("View file not found: " . $viewFile);
+}
+
+// Include the view (variables are now available)
+require_once $viewFile;
 ?>

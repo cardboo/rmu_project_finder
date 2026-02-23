@@ -3,6 +3,7 @@
  * Department Admin Dashboard Controller
  * 
  * Handles business logic for the department admin dashboard page.
+ * This file retrieves department-specific data and passes it to the view.
  * 
  * Path: modules/dep_admin/dashboard/dashboard.php
  */
@@ -10,63 +11,36 @@
 session_start();
 
 // Load core files
-require_once '../../../app/core/middleware.php';
-require_once '../../../app/core/config.php';
+require_once dirname(__DIR__, 3) . '/app/core/middleware.php';
+require_once dirname(__DIR__, 3) . '/app/core/config.php';
 
-// Require department admin role
+// Require department admin role - will redirect if not authorized
 requireDepartmentAdmin();
 
-// Get user data from session
-$username = $_SESSION['username'] ?? 'Administrator';
-$departmentId = getUserDepartment();
+// Get session data
+$username = $_SESSION['username'];
+$dep_id = $_SESSION['dep_id'];
+$dep_name = $_SESSION['dep_name'];
 
-// Verify department access
-requireDepartmentAccess($departmentId);
-
-try {
-    // Total projects in this department
-    $projectQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects WHERE department_id = ?");
-    $projectQuery->bind_param("i", $departmentId);
-    $projectQuery->execute();
-    $totalProjects = $projectQuery->get_result()->fetch_assoc()['total'] ?? 0;
-    
-    // Total supervisors in this department
-    $supervisorQuery = $conn->prepare("SELECT COUNT(*) AS total FROM supervisors WHERE department_id = ?");
-    $supervisorQuery->bind_param("i", $departmentId);
-    $supervisorQuery->execute();
-    $totalSupervisors = $supervisorQuery->get_result()->fetch_assoc()['total'] ?? 0;
-    
-    // Department name
-    $deptQuery = $conn->prepare("SELECT department_name FROM departments WHERE id = ?");
-    $deptQuery->bind_param("i", $departmentId);
-    $deptQuery->execute();
-    $departmentName = $deptQuery->get_result()->fetch_assoc()['department_name'] ?? 'Department';
-    
-    // Recent projects
-    $recentQuery = $conn->prepare("
-        SELECT id, title, created_at 
-        FROM projects 
-        WHERE department_id = ? 
-        ORDER BY created_at DESC 
-        LIMIT 5
-    ");
-    $recentQuery->bind_param("i", $departmentId);
-    $recentQuery->execute();
-    $recentProjects = $recentQuery->get_result()->fetch_all(MYSQLI_ASSOC) ?? [];
-    
-} catch (Exception $e) {
-    error_log("Department Dashboard query error: " . $e->getMessage());
-    $totalProjects = 0;
-    $totalSupervisors = 0;
-    $departmentName = 'Department';
-    $recentProjects = [];
+if (!$conn) {
+  die("Connection failed: " . mysqli_connect_error());
 }
 
-// Set page data
-$pageTitle = "Department Dashboard - " . htmlspecialchars($departmentName);
-$basePath = "../";
-$viewFile = __DIR__ . '/dashboard.view.php';
+// Total projects for this department
+$totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects WHERE dep_id = ?");
+if (!$totalQuery) {
+  die("Prepare failed: " . $conn->error);
+}
+$totalQuery->bind_param("s", $dep_id);
+$totalQuery->execute();
+$totalProjects = $totalQuery->get_result()->fetch_assoc()['total'];
 
-// Load layout which renders the page
-require_once '../../../app/layouts/dep_admin.layout.php';
+// Get the view file
+$viewFile = dirname(__FILE__) . '/dashboard.view.php';
+if (!file_exists($viewFile)) {
+  die("View file not found: " . $viewFile);
+}
+
+// Include the view (variables are now available)
+require_once $viewFile;
 ?>

@@ -26,6 +26,12 @@ if (!isset($_FILES['excel_file']) || $_FILES['excel_file']['error'] !== 0) {
     exit();
 }
 
+// Validate file size (max 5MB)
+if ($_FILES['excel_file']['size'] > 5 * 1024 * 1024) {
+    echo "<script>alert('File too large. Maximum size is 5MB.'); window.location.href='index.php';</script>";
+    exit();
+}
+
 $fileTmpPath = $_FILES['excel_file']['tmp_name'];
 $fileName = $_FILES['excel_file']['name'];
 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
@@ -69,7 +75,7 @@ try {
             continue;
         }
 
-        if (!in_array($status, ['active', 'archived'])) {
+        if (!in_array($status, ['active', 'retired'])) {
             $status = 'active';
         }
 
@@ -103,8 +109,9 @@ try {
     </script>";
 
 } catch (Exception $e) {
+    error_log("Excel upload error (dep_admin/supervisors): " . $e->getMessage());
     echo "<script>
-        alert('Excel upload failed: {$e->getMessage()}');
+        alert('Excel upload failed. Please check the file format and try again.');
         window.location.href='index.php';
     </script>";
 }

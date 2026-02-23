@@ -24,6 +24,25 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `audit_log`
+--
+
+DROP TABLE IF EXISTS `audit_log`;
+CREATE TABLE IF NOT EXISTS `audit_log` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `action` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `details` text COLLATE utf8mb4_general_ci,
+  `ip_address` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_action` (`action`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `admin_logs`
 --
 
@@ -258,7 +277,7 @@ CREATE TABLE IF NOT EXISTS `supervisors_archive` (
   `last_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `email` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
   `dep_id` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
-  `status` enum('active','archived') COLLATE utf8mb4_general_ci DEFAULT 'active',
+  `status` enum('active','retired') COLLATE utf8mb4_general_ci DEFAULT 'active',
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   KEY `dep_id` (`dep_id`)

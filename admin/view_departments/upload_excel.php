@@ -18,7 +18,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf();
 
     if (!isset($_FILES['excel_file']) || $_FILES['excel_file']['error'] !== 0) {
-        die("Invalid file upload.");
+        echo "<script>alert('Invalid file upload.'); window.location.href='index.php';</script>";
+        exit();
+    }
+
+    // Validate file size (max 5MB)
+    if ($_FILES['excel_file']['size'] > 5 * 1024 * 1024) {
+        echo "<script>alert('File too large. Maximum size is 5MB.'); window.location.href='index.php';</script>";
+        exit();
+    }
+
+    // Validate file extension
+    $fileExt = strtolower(pathinfo($_FILES['excel_file']['name'], PATHINFO_EXTENSION));
+    if (!in_array($fileExt, ['xls', 'xlsx'])) {
+        echo "<script>alert('Invalid file type. Upload .xls or .xlsx only.'); window.location.href='index.php';</script>";
+        exit();
     }
 
     $fileTmpPath = $_FILES['excel_file']['tmp_name'];
@@ -62,12 +76,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 continue;
             }
 
-            /** ✅ Generate password */
-            $plainPassword = substr(
-                str_shuffle("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"),
-                0,
-                8
-            );
+            /** Generate cryptographically secure random password (16 chars) */
+            $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+            $plainPassword = '';
+            for ($j = 0; $j < 16; $j++) {
+                $plainPassword .= $chars[random_int(0, strlen($chars) - 1)];
+            }
 
             $hashedPassword = password_hash($plainPassword, PASSWORD_BCRYPT);
 
@@ -127,6 +141,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ";
 
     } catch (Exception $e) {
-        die("Error reading Excel file: " . $e->getMessage());
+        error_log("Excel upload error (admin/upload_excel): " . $e->getMessage());
+        echo "<script>alert('Error reading Excel file. Please check the file format and try again.'); window.location.href='index.php';</script>";
+        exit();
     }
 }

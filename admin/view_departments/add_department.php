@@ -7,6 +7,7 @@ if (!isset($_SESSION['username'])) {
 
 include "../datacon.php";
 include "../csrf.php";
+include "../audit_log.php";
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -40,8 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // ✅ Generate random password (8 chars)
-    $plainPassword = substr(str_shuffle("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"), 0, 8);
+    // Generate cryptographically secure random password (16 chars)
+    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    $plainPassword = '';
+    for ($i = 0; $i < 16; $i++) {
+        $plainPassword .= $chars[random_int(0, strlen($chars) - 1)];
+    }
 
     // ✅ Hash password using bcrypt
     $hashedPassword = password_hash($plainPassword, PASSWORD_BCRYPT);
@@ -51,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_param("sssss", $dep_id, $dep_name, $username, $email, $hashedPassword);
 
     if ($stmt->execute()) {
-        // ✅ Send email using PHPMailer
+        audit_log($conn, 'department_created', "Created department: {$dep_name} (ID: {$dep_id}, user: {$username})");
+        // Send email using PHPMailer
         $mail = new PHPMailer(true);
 
         try {
@@ -83,7 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             echo "<script>alert('Department added and email sent successfully!'); window.location.href='index.php';</script>";
         } catch (Exception $e) {
-            echo "<script>alert('Department added, but email could not be sent. Error: {$mail->ErrorInfo}'); window.location.href='index.php';</script>";
+            error_log("PHPMailer error (add_department): " . $mail->ErrorInfo);
+            echo "<script>alert('Department added, but email could not be sent. Please contact the administrator.'); window.location.href='index.php';</script>";
         }
     } else {
         echo "<script>alert('Error adding department.'); window.location.href='index.php';</script>";

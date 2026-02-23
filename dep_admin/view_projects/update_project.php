@@ -7,6 +7,7 @@ if (!isset($_SESSION['username'])) {
 
 require "../datacon.php";
 require "../csrf.php";
+require "../audit_log.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf();
@@ -46,6 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!in_array($ext, $allowed_ext)) {
                 die("Only PDF files allowed.");
+            }
+
+            // Validate file size (max 10MB)
+            if ($_FILES['project_file']['size'] > 10 * 1024 * 1024) {
+                die("File too large. Maximum size is 10MB.");
             }
 
             $clean = preg_replace("/[^A-Za-z0-9_\-.]/", "_", $file_name);
@@ -158,6 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $link->close();
     }
 
+    audit_log($conn, 'project_updated', "Updated project ID: {$project_id} ({$title})");
     $conn->close();
 
     echo "<script>

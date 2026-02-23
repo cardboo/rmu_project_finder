@@ -7,6 +7,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['dep_id'])) {
 
 include "../datacon.php";
 include "../csrf.php";
+include "../audit_log.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf();
@@ -33,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("sssis", $first_name, $last_name, $email, $id, $dep_id);
 
         if ($stmt->execute()) {
+            audit_log($conn, 'supervisor_updated', "Updated supervisor ID: {$id} ({$first_name} {$last_name})");
             echo "<script>alert('Supervisor updated successfully'); window.location.href='index.php';</script>";
         } else {
             echo "<script>alert('Failed to update supervisor'); window.location.href='index.php';</script>";

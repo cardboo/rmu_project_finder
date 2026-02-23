@@ -7,6 +7,7 @@ if (!isset($_SESSION['username'])) {
 
 include "../datacon.php";
 include "../csrf.php";
+include "../audit_log.php";
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
@@ -43,6 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!in_array($ext, $allowed_ext)) {
             die("Only PDF files allowed.");
+        }
+
+        // Validate file size (max 10MB)
+        if ($_FILES['project_file']['size'] > 10 * 1024 * 1024) {
+            die("File too large. Maximum size is 10MB.");
         }
 
         // sanitize filename and create unique name
@@ -128,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insPS->close();
     }
 
+    audit_log($conn, 'project_created', "Created project: {$title} (year: {$year})");
     $conn->close();
 
     echo "<script>

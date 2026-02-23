@@ -14,8 +14,11 @@ session_start();
 require_once dirname(__DIR__, 3) . '/app/core/middleware.php';
 require_once dirname(__DIR__, 3) . '/app/core/config.php';
 
-// Require admin role - will redirect if not authorized
-requireAdmin();
+// Check if user is logged in and is admin
+if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../../admin/login/");
+    exit;
+}
 
 // Get username from session
 $username = $_SESSION['username'];
@@ -49,3 +52,4 @@ if (!file_exists($viewFile)) {
 // Include the view (variables are now available)
 require_once $viewFile;
 ?>
+

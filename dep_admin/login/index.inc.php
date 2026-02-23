@@ -15,8 +15,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $row = $result->fetch_assoc();
 
         if (password_verify($password, $row['password'])) {
-            // Success - save session data
+            // Success - save session data with proper variables for middleware
+            $_SESSION['user_id'] = $row['dep_id'] ?? 1;
             $_SESSION['username'] = $row['username'];
+            $_SESSION['role'] = 'dep_admin'; // Department admin role
             $_SESSION['dep_id'] = $row['dep_id'];
             $_SESSION['dep_name'] = $row['dep_name'];
 

@@ -11,11 +11,13 @@
 session_start();
 
 // Load core files
-require_once dirname(__DIR__, 3) . '/app/core/middleware.php';
 require_once dirname(__DIR__, 3) . '/app/core/config.php';
 
-// Require department admin role - will redirect if not authorized
-requireDepartmentAdmin();
+// Check if user is logged in and is department admin
+if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'dep_admin') {
+    header("Location: ../../dep_admin/login/");
+    exit;
+}
 
 // Get session data
 $username = $_SESSION['username'];
@@ -44,3 +46,4 @@ if (!file_exists($viewFile)) {
 // Include the view (variables are now available)
 require_once $viewFile;
 ?>
+

@@ -15,10 +15,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $row = $result->fetch_assoc();
 
         if (password_verify($password, $row['password'])) {
-            // Success - save session data
+            // Success - save session data with proper variables for middleware
+            $_SESSION['user_id'] = $row['id'] ?? 1;
             $_SESSION['username'] = $row['username'];
+            $_SESSION['role'] = 'admin'; // Super admin role
             
-
             // Alert success and redirect
             echo "<script>
                     alert('Login successful! Redirecting to dashboard...');

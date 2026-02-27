@@ -13,56 +13,16 @@ $filter = $_GET['department'] ?? '';
 $depQuery = "SELECT dep_id, dep_name FROM departments ORDER BY dep_name ASC";
 $depResult = $conn->query($depQuery);
 $departments = $depResult->fetch_all(MYSQLI_ASSOC);
-// Build main query for projects
-$sql = "
-SELECT
-    p.id AS project_id,
-    p.title,
-    p.synopsis,
-    p.year,
-    p.file_path,
-    d.dep_name,
 
-    GROUP_CONCAT(DISTINCT CONCAT(pm.student_name, ' (', pm.index_number, ')') SEPARATOR ', ') AS members,
-    GROUP_CONCAT(DISTINCT CONCAT(s.first_name, ' ', s.last_name) SEPARATOR ', ') AS supervisors,
-    GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') AS tags
+// Fetch all supervisors for filter dropdown
+$supQuery = "SELECT DISTINCT s.id, CONCAT(s.first_name, ' ', s.last_name) AS full_name FROM supervisors s ORDER BY s.first_name ASC";
+$supResult = $conn->query($supQuery);
+$allSupervisors = $supResult->fetch_all(MYSQLI_ASSOC);
 
-FROM projects p
-
-LEFT JOIN departments d
-    ON p.dep_id = d.dep_id
-
-LEFT JOIN project_members pm
-    ON p.id = pm.project_id
-
-LEFT JOIN project_supervisors ps
-    ON p.id = ps.project_id
-LEFT JOIN supervisors s
-    ON ps.supervisor_id = s.id
-
-LEFT JOIN project_tags pt
-    ON p.id = pt.project_id
-LEFT JOIN tags t
-    ON pt.tag_id = t.id
-";
-
-if (!empty($filter)) {
-    $sql .= " WHERE p.dep_id = ? ";
-}
-
-$sql .= "
-GROUP BY p.id
-ORDER BY p.year DESC, p.created_at DESC
-";
-
-$stmt = $conn->prepare($sql);
-
-if (!empty($filter)) {
-    $stmt->bind_param("s", $filter);
-}
-
-$stmt->execute();
-$projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+// Fetch all tags for filter dropdown
+$tagQuery = "SELECT id, name FROM tags ORDER BY name ASC";
+$tagResult = $conn->query($tagQuery);
+$allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
 
 ?>
 
@@ -458,9 +418,11 @@ $projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>View Projects</h2>
+    <button class="btn btn-outline-primary btn-sm" onclick="exportCSV()">Export CSV</button>
   </div>
-   <!-- Filters -->
-  <div class="row g-2 mb-3">
+
+  <!-- Filters Row 1 -->
+  <div class="row g-2 mb-2">
     <div class="col-md-3">
       <select id="department" class="form-select">
         <option value="">All Departments</option>
@@ -480,16 +442,42 @@ $projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     </div>
 
     <div class="col-md-3">
-      <input type="text" id="search" class="form-control" placeholder="Search projects...">
+      <select id="supervisor" class="form-select">
+        <option value="">All Supervisors</option>
+        <?php foreach ($allSupervisors as $sup): ?>
+          <option value="<?= $sup['id'] ?>"><?= htmlspecialchars($sup['full_name']) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <select id="tag" class="form-select">
+        <option value="">All Tags</option>
+        <?php foreach ($allTags as $tag): ?>
+          <option value="<?= $tag['id'] ?>"><?= htmlspecialchars($tag['name']) ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
 
     <div class="col-md-2">
       <select id="sort" class="form-select">
-        <option value="year_desc">Newest</option>
-        <option value="year_asc">Oldest</option>
-        <option value="title_asc">Title A–Z</option>
-        <option value="title_desc">Title Z–A</option>
+        <option value="year_desc">Newest First</option>
+        <option value="year_asc">Oldest First</option>
+        <option value="title_asc">Title A-Z</option>
+        <option value="title_desc">Title Z-A</option>
+        <option value="dep_asc">Department A-Z</option>
+        <option value="dep_desc">Department Z-A</option>
       </select>
+    </div>
+  </div>
+
+  <!-- Filters Row 2: Search + Result Count -->
+  <div class="row g-2 mb-3">
+    <div class="col-md-4">
+      <input type="text" id="search" class="form-control" placeholder="Search by title, description, or tag...">
+    </div>
+    <div class="col-md-8 d-flex align-items-center">
+      <span id="resultCount" class="text-muted fw-bold ms-2"></span>
     </div>
   </div>
 
@@ -500,10 +488,10 @@ $projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         <thead class="table-dark">
             <tr>
                 <th>#</th>
-                <th>Project Title</th>
+                <th style="cursor:pointer" onclick="sortByColumn('title_asc','title_desc')">Project Title <span class="sort-icon">&#8693;</span></th>
                 <th>Description</th>
-                <th>Year</th>
-                <th>Department</th>
+                <th style="cursor:pointer" onclick="sortByColumn('year_asc','year_desc')">Year <span class="sort-icon">&#8693;</span></th>
+                <th style="cursor:pointer" onclick="sortByColumn('dep_asc','dep_desc')">Department <span class="sort-icon">&#8693;</span></th>
                 <th>Participant(s)</th>
                 <th>Project Supervisor(s)</th>
                 <th>Project Tags</th>
@@ -512,43 +500,8 @@ $projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             </tr>
         </thead>
         <tbody>
-               <?php if ($projects): ?>
-                  <?php foreach ($projects as $i => $p): ?>
-                  <tr>
-                      <td><?= $i + 1 ?></td>
-                      <td><?= htmlspecialchars($p['title']) ?></td>
-                      <td><?= htmlspecialchars($p['synopsis']) ?></td>
-                      <td><?= $p['year'] ?></td>
-                      <td><?= htmlspecialchars($p['dep_name']) ?></td>
-                      <td><?= $p['members'] ?: '—' ?></td>
-                      <td><?= $p['supervisors'] ?: '—' ?></td>
-                      <td><?= $p['tags'] ?: '—' ?></td>
-                     <td>
-                     <button 
-                      class="btn btn-sm btn-primary"
-                      data-bs-toggle="modal"
-                      data-bs-target="#viewDetailsModal"
-                      data-title="<?= htmlspecialchars($p['title']) ?>"
-                      data-description="<?= htmlspecialchars($p['synopsis']) ?>"
-                      data-year="<?= $p['year'] ?>"
-                      data-members="<?= htmlspecialchars($p['members']) ?>"
-                      data-supervisors="<?= htmlspecialchars($p['supervisors']) ?>"
-                      data-tags="<?= htmlspecialchars($p['tags']) ?>"
-                      data-file="<?= htmlspecialchars($p['file_path']) ?>"
-                    >
-                      View
-                    </button>
-
-                    </td>
-
-                  </tr>
-                  <?php endforeach; ?>
-              <?php else: ?>
-                  <tr>
-                      <td colspan="9" class="text-center">No projects found</td>
-                  </tr>
-              <?php endif; ?>
-          </tbody>
+            <!-- Populated via AJAX fetchProjects() -->
+        </tbody>
 
     </table>
 </div>
@@ -654,10 +607,11 @@ viewModal.addEventListener('show.bs.modal', function (event) {
 </script>
 
 <script>
-const filters = ['department', 'year', 'search', 'sort'];
+const filters = ['department', 'year', 'search', 'sort', 'supervisor', 'tag'];
 
 filters.forEach(id => {
-  document.getElementById(id).addEventListener('input', fetchProjects);
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', fetchProjects);
 });
 
 function fetchProjects() {
@@ -665,7 +619,9 @@ function fetchProjects() {
     department: document.getElementById('department').value,
     year: document.getElementById('year').value,
     q: document.getElementById('search').value,
-    sort: document.getElementById('sort').value
+    sort: document.getElementById('sort').value,
+    supervisor: document.getElementById('supervisor').value,
+    tag: document.getElementById('tag').value
   });
 
   fetch('fetch_projects.php?' + params.toString())
@@ -675,11 +631,55 @@ function fetchProjects() {
     })
     .then(html => {
       document.querySelector('tbody').innerHTML = html;
+      // Update result count
+      const rows = document.querySelectorAll('tbody tr');
+      const count = rows.length;
+      const countEl = document.getElementById('resultCount');
+      if (count === 1 && rows[0].querySelector('td[colspan]')) {
+        countEl.textContent = '0 projects found';
+      } else {
+        countEl.textContent = count + ' project' + (count !== 1 ? 's' : '') + ' found';
+      }
     })
     .catch(error => {
       console.error('Error fetching projects:', error);
       document.querySelector('tbody').innerHTML = '<tr><td colspan="9" class="text-center">Error loading projects</td></tr>';
+      document.getElementById('resultCount').textContent = '';
     });
+}
+
+// Column header sort toggle
+function sortByColumn(ascVal, descVal) {
+  const sortEl = document.getElementById('sort');
+  sortEl.value = (sortEl.value === ascVal) ? descVal : ascVal;
+  fetchProjects();
+}
+
+// Export visible table data as CSV
+function exportCSV() {
+  const rows = document.querySelectorAll('tbody tr');
+  if (!rows.length) return;
+
+  const headers = ['#', 'Project Title', 'Description', 'Year', 'Department', 'Participants', 'Supervisors', 'Tags'];
+  let csv = headers.map(h => '"' + h + '"').join(',') + '\n';
+
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 8) return; // skip "no results" row
+    const rowData = [];
+    for (let i = 0; i < 8; i++) {
+      rowData.push('"' + (cells[i].textContent || '').replace(/"/g, '""').trim() + '"');
+    }
+    csv += rowData.join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'projects_report_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // Load initially

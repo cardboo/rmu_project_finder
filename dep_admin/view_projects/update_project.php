@@ -38,42 +38,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!empty($_FILES['project_file']['name'])) {
 
-        if ($_FILES['project_file']['error'] === UPLOAD_ERR_OK) {
+        $upload_error = $_FILES['project_file']['error'];
 
-            $allowed_ext = ['pdf'];
-            $file_name = $_FILES['project_file']['name'];
-            $tmp = $_FILES['project_file']['tmp_name'];
-            $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-
-            if (!in_array($ext, $allowed_ext)) {
-                die("Only PDF files allowed.");
-            }
-
-            // Validate file size (max 10MB)
-            if ($_FILES['project_file']['size'] > 10 * 1024 * 1024) {
-                die("File too large. Maximum size is 10MB.");
-            }
-
-            $clean = preg_replace("/[^A-Za-z0-9_\-.]/", "_", $file_name);
-            $new_name = time() . "_" . $clean;
-
-            $upload_dir = __DIR__ . "/../uploads/projects/";
-            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-
-            $target = $upload_dir . $new_name;
-
-            if (!move_uploaded_file($tmp, $target)) {
-                die("File upload failed.");
-            }
-
-            // DELETE OLD FILE
-            if (!empty($existing_file)) {
-                $old_file = $upload_dir . $existing_file;
-                if (file_exists($old_file)) @unlink($old_file);
-            }
-
-            $file_path = $new_name;
+        if ($upload_error !== UPLOAD_ERR_OK) {
+            $error_messages = [
+                UPLOAD_ERR_INI_SIZE   => 'File exceeds server upload limit.',
+                UPLOAD_ERR_FORM_SIZE  => 'File exceeds form upload limit.',
+                UPLOAD_ERR_PARTIAL    => 'File was only partially uploaded.',
+                UPLOAD_ERR_NO_FILE    => 'No file was uploaded.',
+                UPLOAD_ERR_NO_TMP_DIR => 'Server temporary folder missing.',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
+                UPLOAD_ERR_EXTENSION  => 'Upload blocked by server extension.',
+            ];
+            $msg = $error_messages[$upload_error] ?? 'Unknown upload error.';
+            echo "<script>alert('File upload error: {$msg}'); window.history.back();</script>";
+            exit();
         }
+
+        $allowed_ext = ['pdf'];
+        $file_name = $_FILES['project_file']['name'];
+        $tmp = $_FILES['project_file']['tmp_name'];
+        $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+        if (!in_array($ext, $allowed_ext)) {
+            echo "<script>alert('Only PDF files allowed.'); window.history.back();</script>";
+            exit();
+        }
+
+        // Validate file size (max 10MB)
+        if ($_FILES['project_file']['size'] > 10 * 1024 * 1024) {
+            echo "<script>alert('File too large. Maximum size is 10MB.'); window.history.back();</script>";
+            exit();
+        }
+
+        $clean = preg_replace("/[^A-Za-z0-9_\-.]/", "_", $file_name);
+        $new_name = time() . "_" . $clean;
+
+        $upload_dir = __DIR__ . "/../uploads/projects/";
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+
+        $target = $upload_dir . $new_name;
+
+        if (!move_uploaded_file($tmp, $target)) {
+            echo "<script>alert('File upload failed.'); window.history.back();</script>";
+            exit();
+        }
+
+        // DELETE OLD FILE
+        if (!empty($existing_file)) {
+            $old_file = $upload_dir . $existing_file;
+            if (file_exists($old_file)) @unlink($old_file);
+        }
+
+        $file_path = $new_name;
     }
 
     // ---------------------------------------------------------------

@@ -39,14 +39,29 @@ if (!empty($_GET['q'])) {
     $types .= "sss";
 }
 
+$supervisor = $_GET['supervisor'] ?? '';
+if ($supervisor !== '') {
+    $where[]  = "ps.supervisor_id = ?";
+    $params[] = (int)$supervisor;
+    $types   .= "i";
+}
+
+$tag = $_GET['tag'] ?? '';
+if ($tag !== '') {
+    $where[]  = "pt.tag_id = ?";
+    $params[] = (int)$tag;
+    $types   .= "i";
+}
+
 // ============================
 // Sorting
 // ============================
-// PHP 7-compatible replacement for match
 $sortMap = [
     'year_asc'   => 'p.year ASC',
     'title_asc'  => 'p.title ASC',
     'title_desc' => 'p.title DESC',
+    'dep_asc'    => 'd.dep_name ASC',
+    'dep_desc'   => 'd.dep_name DESC',
 ];
 $orderBy = $sortMap[$sort] ?? 'p.year DESC';
 
@@ -90,7 +105,9 @@ $result = $stmt->get_result();
 // Output HTML rows
 // ============================
 $i = 1;
+$hasRows = false;
 while ($p = $result->fetch_assoc()):
+    $hasRows = true;
 ?>
 <tr>
   <td><?= $i++ ?></td>
@@ -117,4 +134,8 @@ while ($p = $result->fetch_assoc()):
     </button>
   </td>
 </tr>
-<?php endwhile; ?>
+<?php endwhile;
+
+if (!$hasRows): ?>
+<tr><td colspan="9" class="text-center">No projects found</td></tr>
+<?php endif; ?>

@@ -764,7 +764,14 @@ function addEditMemberRow(name = '', index = '') {
     container.appendChild(memberRow);
 }
 
-function addEditSupervisorRow(supervisorId = '', supervisorsList = []) {
+// Global variable to store supervisors list for the edit modal
+let currentEditSupervisorsList = [];
+
+function addEditSupervisorRow(supervisorId = '', supervisorsList = null) {
+    // Use global list if none provided (e.g. from "+ Add Supervisor" button)
+    if (!supervisorsList || supervisorsList.length === 0) {
+        supervisorsList = currentEditSupervisorsList;
+    }
     const container = document.getElementById('edit-supervisors-container');
     const supervisorRow = document.createElement('div');
     supervisorRow.className = 'supervisor-row row mb-2';
@@ -800,6 +807,9 @@ document.querySelectorAll('.edit-btn').forEach(button => {
         const membersData = JSON.parse(this.getAttribute('data-members') || '[]');
         const supervisorsData = JSON.parse(this.getAttribute('data-supervisors') || '[]');
         const supervisorsList = JSON.parse(this.getAttribute('data-supervisors-list') || '[]'); // All supervisors from DB
+
+        // Store globally so "+ Add Supervisor" button can use it
+        currentEditSupervisorsList = supervisorsList;
 
         document.getElementById('edit_project_id').value = id;
         document.getElementById('edit_project_title').value = title;
@@ -973,6 +983,55 @@ addProjectModal.addEventListener('hidden.bs.modal', () => {
   document.getElementById('filePreviewWrapper').style.display = 'none';
   document.getElementById('noFilePreview').style.display = 'block';
 });
+</script>
+
+<script>
+// Auto-generate tags from project title keywords
+(function() {
+  const stopWords = new Set([
+    'the','a','an','and','or','but','in','on','at','to','for','of','with','by',
+    'from','as','is','was','are','were','be','been','being','have','has','had',
+    'do','does','did','will','would','shall','should','can','could','may','might',
+    'must','that','this','these','those','it','its','not','no','so','if','then',
+    'than','too','very','just','about','above','after','again','all','also','am',
+    'any','because','before','between','both','during','each','few','further',
+    'here','how','into','more','most','other','our','out','own','same','some',
+    'such','there','through','under','until','up','what','when','where','which',
+    'while','who','whom','why','you','your','using','based','study','analysis',
+    'development','design','system','project','research','implementation','use'
+  ]);
+
+  function generateTags(title) {
+    if (!title.trim()) return '';
+    const words = title.split(/[\s\-\/,;:()]+/)
+      .map(w => w.replace(/[^a-zA-Z0-9]/g, '').toLowerCase())
+      .filter(w => w.length > 2 && !stopWords.has(w));
+    const unique = [...new Set(words)];
+    return unique.slice(0, 6).join(', ');
+  }
+
+  // Add project modal - auto-generate tags on title blur
+  const addTitle = document.getElementById('project_title');
+  const addTags = document.getElementById('tags');
+  if (addTitle && addTags) {
+    addTitle.addEventListener('blur', function() {
+      if (addTags.value.trim() === '') {
+        addTags.value = generateTags(this.value);
+      }
+    });
+  }
+
+  // Edit project modal - auto-generate tags on title blur if tags are empty
+  const editTitle = document.getElementById('edit_project_title');
+  const editTags = document.getElementById('edit_tags');
+  if (editTitle && editTags) {
+    editTitle.addEventListener('blur', function() {
+      if (editTags.value.trim() === '') {
+        editTags.value = generateTags(this.value);
+      }
+    });
+  }
+})();
 </script>
 
 </body>

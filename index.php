@@ -375,6 +375,144 @@
     transform: translateY(-1px);
   }
 
+  .preview-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .preview-btn:hover {
+    background: var(--navy);
+    transform: translateY(-1px);
+  }
+
+  /* === PREVIEW MODAL === */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .preview-modal {
+    background: var(--card-bg);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+  }
+
+  .preview-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: var(--navy);
+    color: #fff;
+  }
+
+  .preview-modal-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    margin-right: 16px;
+  }
+
+  .preview-modal-header .modal-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .preview-modal-header .modal-download-btn {
+    padding: 6px 16px;
+    background: #fff;
+    color: var(--navy);
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    transition: background 0.2s;
+  }
+
+  .preview-modal-header .modal-download-btn:hover {
+    background: #e2e8f0;
+  }
+
+  .preview-modal-header .modal-close-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+
+  .preview-modal-header .modal-close-btn:hover {
+    background: rgba(255,255,255,0.3);
+  }
+
+  .preview-modal-body {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .preview-modal-body iframe {
+    width: 100%;
+    height: 70vh;
+    border: none;
+    display: block;
+  }
+
+  .preview-no-file {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-muted);
+    font-size: 15px;
+    font-style: italic;
+  }
+
   /* === EMPTY / LOADING STATE === */
   .empty-state {
     text-align: center;
@@ -592,8 +730,8 @@ function renderCard(p) {
       ).join('')
     : '';
 
-  const downloadHtml = (p.file_path && p.file_path.trim())
-    ? `<a href="dep_admin/download.php?file=${encodeURIComponent(p.file_path)}" class="download-btn">&#8595; Download</a>`
+  const fileHtml = (p.file_path && p.file_path.trim())
+    ? `<button class="preview-btn" onclick="openPreview('${escapeHtml(p.file_path)}', '${escapeHtml(p.title)}')">&#128196; Preview &amp; Download</button>`
     : `<span style="font-size:12px;color:var(--text-muted)">No file</span>`;
 
   return `
@@ -608,7 +746,7 @@ function renderCard(p) {
     ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
     <div class="card-footer">
       <span class="dept-label">${escapeHtml(p.dep_name)}</span>
-      ${downloadHtml}
+      ${fileHtml}
     </div>
   </div>`;
 }
@@ -670,6 +808,70 @@ document.getElementById('yearFilter').addEventListener('change', performSearch);
 
 // Init
 loadFilters();
+</script>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay" id="previewModal">
+  <div class="preview-modal">
+    <div class="preview-modal-header">
+      <h3 id="previewTitle">Project Preview</h3>
+      <div class="modal-actions">
+        <a id="previewDownloadBtn" href="#" class="modal-download-btn">&#8595; Download</a>
+        <button class="modal-close-btn" onclick="closePreview()">&times;</button>
+      </div>
+    </div>
+    <div class="preview-modal-body">
+      <iframe id="previewFrame" src=""></iframe>
+      <div class="preview-no-file" id="previewNoFile" style="display:none;">No file available for preview.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openPreview(filePath, title) {
+  const modal = document.getElementById('previewModal');
+  const frame = document.getElementById('previewFrame');
+  const noFile = document.getElementById('previewNoFile');
+  const downloadBtn = document.getElementById('previewDownloadBtn');
+
+  document.getElementById('previewTitle').textContent = title || 'Project Preview';
+
+  if (filePath && filePath.trim()) {
+    const viewUrl = 'dep_admin/uploads/projects/' + filePath;
+    const downloadUrl = 'dep_admin/download.php?file=' + encodeURIComponent(filePath);
+
+    frame.src = viewUrl + '#page=1&zoom=90';
+    frame.style.display = 'block';
+    noFile.style.display = 'none';
+    downloadBtn.href = downloadUrl;
+    downloadBtn.style.display = '';
+  } else {
+    frame.src = '';
+    frame.style.display = 'none';
+    noFile.style.display = 'flex';
+    downloadBtn.style.display = 'none';
+  }
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePreview() {
+  const modal = document.getElementById('previewModal');
+  document.getElementById('previewFrame').src = '';
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// Close on overlay click
+document.getElementById('previewModal').addEventListener('click', function(e) {
+  if (e.target === this) closePreview();
+});
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closePreview();
+});
 </script>
 
 </body>

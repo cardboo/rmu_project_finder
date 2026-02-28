@@ -248,18 +248,46 @@
   /* === PROJECT CARD === */
   .project-card {
     background: var(--card-bg);
-    border-radius: 12px;
-    border-left: 5px solid var(--navy);
+    border-radius: 14px;
+    border: none;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    padding: 24px 26px;
+    padding: 0;
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    position: relative;
   }
 
   .project-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 28px rgba(0, 33, 71, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 33, 71, 0.14);
+  }
+
+  /* Card top accent bar */
+  .project-card .card-accent {
+    height: 5px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--accent) 100%);
+  }
+
+  .project-card .card-body-inner {
+    padding: 22px 24px 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  /* Logo watermark */
+  .project-card .card-logo {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    opacity: 0.12;
+    pointer-events: none;
   }
 
   .project-card .card-header {
@@ -267,49 +295,64 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+    padding-right: 32px;
   }
 
   .project-card h3 {
     margin: 0;
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.05rem;
+    font-weight: 800;
     color: var(--navy);
     line-height: 1.35;
     flex: 1;
+    letter-spacing: -0.01em;
   }
 
   .project-card .year-badge {
-    background: var(--accent-soft);
-    color: var(--accent);
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 12px;
+    background: var(--navy);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
     font-weight: 700;
     white-space: nowrap;
+    letter-spacing: 0.04em;
   }
 
   .project-card .meta {
     font-size: 13px;
     color: var(--text-muted);
-    margin: 4px 0;
+    margin: 3px 0;
     line-height: 1.5;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
   }
 
   .project-card .meta strong {
-    color: var(--text);
-    font-weight: 600;
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    min-width: 90px;
+    flex-shrink: 0;
   }
 
   .project-card .synopsis {
-    font-size: 13.5px;
+    font-size: 13px;
     color: var(--text-muted);
-    line-height: 1.55;
-    margin: 10px 0;
+    line-height: 1.6;
+    margin: 12px 0 6px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent);
   }
 
   .project-card .card-tags {
@@ -323,35 +366,51 @@
     display: inline-block;
     background: var(--accent-soft);
     color: var(--navy);
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 11.5px;
-    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
     cursor: pointer;
     border: 1px solid var(--accent-border);
     transition: all 0.2s;
+    letter-spacing: 0.02em;
   }
 
   .project-card .card-tag:hover {
     background: var(--navy);
     color: #fff;
+    border-color: var(--navy);
   }
 
   .project-card .card-footer {
     margin-top: auto;
-    padding-top: 14px;
+    padding: 14px 24px;
     border-top: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: rgba(0, 33, 71, 0.02);
   }
 
   .project-card .dept-label {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--accent);
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .project-card .dept-label::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.5;
   }
 
   .download-btn {
@@ -736,14 +795,18 @@ function renderCard(p) {
 
   return `
   <div class="project-card">
-    <div class="card-header">
-      <h3>${escapeHtml(p.title)}</h3>
-      <span class="year-badge">${escapeHtml(String(p.year))}</span>
+    <div class="card-accent"></div>
+    <img src="dep_admin/assets/images/logos/rmu.jpg" alt="" class="card-logo" />
+    <div class="card-body-inner">
+      <div class="card-header">
+        <h3>${escapeHtml(p.title)}</h3>
+        <span class="year-badge">${escapeHtml(String(p.year))}</span>
+      </div>
+      <p class="meta"><strong>Students</strong> ${escapeHtml(p.student_names) || 'N/A'}</p>
+      <p class="meta"><strong>Supervisor(s)</strong> ${escapeHtml(p.supervisors) || 'N/A'}</p>
+      ${p.synopsis ? `<p class="synopsis">${escapeHtml(p.synopsis)}</p>` : ''}
+      ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
     </div>
-    <p class="meta"><strong>Students:</strong> ${escapeHtml(p.student_names) || 'N/A'}</p>
-    <p class="meta"><strong>Supervisor(s):</strong> ${escapeHtml(p.supervisors) || 'N/A'}</p>
-    ${p.synopsis ? `<p class="synopsis">${escapeHtml(p.synopsis)}</p>` : ''}
-    ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
     <div class="card-footer">
       <span class="dept-label">${escapeHtml(p.dep_name)}</span>
       ${fileHtml}

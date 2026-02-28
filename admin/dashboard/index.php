@@ -33,12 +33,7 @@ $totalDepartments = $deptQuery->get_result()->fetch_assoc()['total'];
   <title>Admin Dashboard</title>
   <link rel="shortcut icon" type="image/png" href="../assets/images/logos/rmu.jpg" />
   <link rel="stylesheet" href="../assets/css/styles.min.css" />
-
-  <style>
-  .content-container {
-    padding-top: 80px; /* adjust if navbar height changes */
-  }
-</style>
+  <link rel="stylesheet" href="../assets/css/custom-theme.css" />
 
 </head>
 
@@ -121,24 +116,27 @@ $totalDepartments = $deptQuery->get_result()->fetch_assoc()['total'];
       </header>
       <!--  Header End -->
 <div class="container content-container">
-  <div class="row">
+  <div class="page-header">
+    <h2>Admin Dashboard</h2>
+  </div>
+  <div class="row g-4">
 
-    <!-- Total Projects -->
-    <div class="col-md-4">
-      <div class="card text-white bg-primary mb-3">
-        <div class="card-body py-5">
-          <h5 class="card-title">Total Projects</h5>
-          <p class="card-text fs-3"><?= $totalProjects ?></p>
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="card stat-card navy">
+        <div class="card-body">
+          <div class="stat-label">Total Projects</div>
+          <div class="stat-value"><?= $totalProjects ?></div>
+          <span class="stat-bar"></span>
         </div>
       </div>
     </div>
 
-    <!-- Total Departments -->
-    <div class="col-md-4">
-      <div class="card text-white bg-secondary mb-3">
-        <div class="card-body py-5">
-          <h5 class="card-title">Number of Departments</h5>
-          <p class="card-text fs-3"><?= $totalDepartments ?></p>
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="card stat-card accent">
+        <div class="card-body">
+          <div class="stat-label">Departments</div>
+          <div class="stat-value"><?= $totalDepartments ?></div>
+          <span class="stat-bar"></span>
         </div>
       </div>
     </div>

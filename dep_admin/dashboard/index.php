@@ -34,112 +34,7 @@ $totalProjects = $totalResult['total'];
   <title>Department Dashboard</title>
   <link rel="shortcut icon" type="image/png" href="../assets/images/logos/rmu.jpg" />
   <link rel="stylesheet" href="../assets/css/styles.min.css" />
-
-  <style>
-  .content-container {
-    padding-top: 80px; /* adjust if navbar height changes */
-  }
-   :root {
-    --uni-navy: #002147;
-    --uni-white: #ffffff;
-    --uni-white-soft: rgba(255, 255, 255, 0.75);
-  }
-
-  /* TOTAL PROJECTS CARD (NAVY) */
-  .bg-primary {
-    background: var(--uni-navy) !important;
-    color: var(--uni-white) !important;
-  }
-
-  /* Label text */
-  .bg-primary .card-title {
-    color: var(--uni-white-soft);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  /* Main number */
-  .bg-primary .card-text {
-    color: var(--uni-white);
-    font-size: 2.6rem;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-  }
-
-  /* Optional emphasis line */
-  .bg-primary .card-body::after {
-    content: "";
-    display: block;
-    width: 48px;
-    height: 3px;
-    background-color: rgba(255, 255, 255, 0.4);
-    margin-top: 14px;
-    border-radius: 2px;
-  }
-  /* ==========================
-   RESPONSIVE DASHBOARD TWEAKS
-   ========================== */
-
-/* Global mobile padding fix */
-@media (max-width: 576px) {
-  .content-container {
-    padding-top: 100px;
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .card-body {
-    padding: 1.5rem !important;
-  }
-
-  .card-title {
-    font-size: 11px;
-  }
-
-  .card-text {
-    font-size: 1.8rem !important;
-  }
-}
-
-/* Tablet adjustments */
-@media (max-width: 768px) {
-  .content-container {
-    padding-top: 90px;
-  }
-
-  .card-body {
-    padding: 2rem !important;
-  }
-}
-
-/* Sidebar behavior safety */
-@media (max-width: 991px) {
-  .left-sidebar {
-    position: fixed;
-    z-index: 1050;
-  }
-
-  .body-wrapper {
-    margin-left: 0 !important;
-  }
-}
-
-/* Improve card spacing consistency */
-.card {
-  border-radius: 12px;
-}
-
-/* Department card text polish */
-.bg-warning .card-text {
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-</style>
+  <link rel="stylesheet" href="../assets/css/custom-theme.css" />
 
 </head>
 
@@ -216,28 +111,33 @@ $totalProjects = $totalResult['total'];
       </header>
       <!--  Header End -->
 <div class="container content-container">
+  <div class="page-header">
+    <h2>Department Dashboard</h2>
+  </div>
+  <div class="row g-4">
 
-  <div class="row">
- <div class="col-12 col-sm-6 col-md-4">
-
-      <div class="card text-white bg-warning mb-3">
-        <div class="card-body py-5">
-          <h5 class="card-title">Department</h5>
-         <p class="card-text fs-4"><?= htmlspecialchars($dep_name); ?></p>
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="card stat-card light">
+        <div class="card-body">
+          <div class="stat-label">Department</div>
+          <div class="stat-value" style="font-size:1.4rem"><?= htmlspecialchars($dep_name); ?></div>
+          <span class="stat-bar"></span>
         </div>
       </div>
     </div>
 
-    <!-- Total Projects -->
-  <div class="col-12 col-sm-6 col-md-4">
-
-      <div class="card text-white bg-primary mb-3">
-        <div class="card-body py-5">
-          <h5 class="card-title">Total Projects</h5>
-        <p class="card-text fs-3"><?php echo $totalProjects; ?></p>
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="card stat-card navy">
+        <div class="card-body">
+          <div class="stat-label">Total Projects</div>
+          <div class="stat-value"><?= $totalProjects ?></div>
+          <span class="stat-bar"></span>
         </div>
       </div>
     </div>
+
+  </div>
+</div>
 
     
 

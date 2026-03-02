@@ -344,7 +344,7 @@
     font-size: 13px;
     color: var(--text-muted);
     line-height: 1.6;
-    margin: 12px 0 6px;
+    margin: 12px 0 4px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -353,6 +353,98 @@
     background: var(--bg);
     border-radius: 8px;
     border-left: 3px solid var(--accent);
+  }
+
+  .project-card .read-more-link {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+
+  .project-card .read-more-link:hover {
+    color: var(--navy);
+    text-decoration: underline;
+  }
+
+  /* === DESCRIPTION MODAL === */
+  .desc-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .desc-modal-overlay.active {
+    display: flex;
+  }
+
+  .desc-modal {
+    background: var(--card-bg);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+  }
+
+  .desc-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: var(--navy);
+    color: #fff;
+  }
+
+  .desc-modal-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    flex: 1;
+    margin-right: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .desc-modal-header .desc-close-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .desc-modal-header .desc-close-btn:hover {
+    background: rgba(255,255,255,0.3);
+  }
+
+  .desc-modal-body {
+    padding: 24px 28px;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--text);
   }
 
   .project-card .card-tags {
@@ -804,7 +896,7 @@ function renderCard(p) {
       </div>
       <p class="meta"><strong>Students</strong> ${escapeHtml(p.student_names) || 'N/A'}</p>
       <p class="meta"><strong>Supervisor(s)</strong> ${escapeHtml(p.supervisors) || 'N/A'}</p>
-      ${p.synopsis ? `<p class="synopsis">${escapeHtml(p.synopsis)}</p>` : ''}
+      ${p.synopsis ? `<p class="synopsis" data-full-text="${escapeHtml(p.synopsis)}" data-title="${escapeHtml(p.title)}">${escapeHtml(p.synopsis)}</p>${p.synopsis.length > 150 ? `<span class="read-more-link" onclick="openDescFromCard(this)">Read more</span>` : ''}` : ''}
       ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
     </div>
     <div class="card-footer">
@@ -933,7 +1025,41 @@ document.getElementById('previewModal').addEventListener('click', function(e) {
 
 // Close on Escape key
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closePreview();
+  if (e.key === 'Escape') { closePreview(); closeDescModal(); }
+});
+</script>
+
+<!-- DESCRIPTION MODAL -->
+<div class="desc-modal-overlay" id="descModal">
+  <div class="desc-modal">
+    <div class="desc-modal-header">
+      <h3 id="descModalTitle">Description</h3>
+      <button class="desc-close-btn" onclick="closeDescModal()">&times;</button>
+    </div>
+    <div class="desc-modal-body" id="descModalBody"></div>
+  </div>
+</div>
+
+<script>
+function openDescFromCard(link) {
+  const synopsisEl = link.previousElementSibling;
+  const fullText = synopsisEl.getAttribute('data-full-text') || synopsisEl.textContent;
+  const title = synopsisEl.getAttribute('data-title') || 'Description';
+  document.getElementById('descModalTitle').textContent = title;
+  document.getElementById('descModalBody').textContent = fullText;
+  document.getElementById('descModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDescModal() {
+  document.getElementById('descModal').classList.remove('active');
+  if (!document.getElementById('previewModal').classList.contains('active')) {
+    document.body.style.overflow = '';
+  }
+}
+
+document.getElementById('descModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDescModal();
 });
 </script>
 

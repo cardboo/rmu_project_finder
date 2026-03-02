@@ -356,7 +356,7 @@ while ($row = $projectResult->fetch_assoc()) {
   <div id="supervisors-container">
     <div class="supervisor-row row mb-2">
       <div class="col">
-        <select name="supervisors[]" class="form-select" required>
+        <select name="supervisors[]" class="form-select" required onchange="refreshSupervisorDropdowns('supervisors-container')">
     <option value="">Select Supervisor</option>
     <?php foreach ($supervisors as $sup): ?>
         <option value="<?= $sup['id'] ?>"><?= htmlspecialchars($sup['full_name']) ?></option>
@@ -517,24 +517,29 @@ function addEditSupervisorRow(supervisorId = '', supervisorsList = null) {
         supervisorsList = currentEditSupervisorsList;
     }
     const container = document.getElementById('edit-supervisors-container');
+    const takenIds = getSelectedSupervisorIds('edit-supervisors-container', null);
     const supervisorRow = document.createElement('div');
     supervisorRow.className = 'supervisor-row row mb-2';
 
-    // Build options dynamically from supervisorsList
+    // Build options dynamically, omitting already-selected supervisors
     let options = '<option value="">Select Supervisor</option>';
     supervisorsList.forEach(s => {
-        const selected = (s.id == supervisorId) ? 'selected' : '';
-        options += `<option value="${s.id}" ${selected}>${s.full_name}</option>`;
+        const sid = String(s.id);
+        const isCurrentRow = (sid == supervisorId);
+        if (!takenIds.includes(sid) || isCurrentRow) {
+            const selected = isCurrentRow ? 'selected' : '';
+            options += `<option value="${s.id}" ${selected}>${s.full_name}</option>`;
+        }
     });
 
     supervisorRow.innerHTML = `
         <div class="col">
-            <select name="supervisors[]" class="form-select" required>
+            <select name="supervisors[]" class="form-select" required onchange="refreshSupervisorDropdowns('edit-supervisors-container', currentEditSupervisorsList)">
                 ${options}
             </select>
         </div>
         <div class="col-auto">
-            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.supervisor-row').remove()">×</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.supervisor-row').remove(); refreshSupervisorDropdowns('edit-supervisors-container', currentEditSupervisorsList)">×</button>
         </div>
     `;
     container.appendChild(supervisorRow);
@@ -660,26 +665,60 @@ document.getElementById('edit_project_file').addEventListener('change', function
 
 
 <script>
-const supervisorOptions = `<?php
-foreach ($supervisors as $sup) {
-    echo '<option value="' . $sup['id'] . '">' . htmlspecialchars($sup['full_name']) . '</option>';
+const allSupervisorsAdd = <?= json_encode($supervisors, JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+// Get currently selected supervisor IDs in a container
+function getSelectedSupervisorIds(containerId, excludeSelect) {
+    const selects = document.querySelectorAll('#' + containerId + ' select[name="supervisors[]"]');
+    const ids = [];
+    selects.forEach(s => {
+        if (s !== excludeSelect && s.value) ids.push(s.value);
+    });
+    return ids;
 }
-?>`;
+
+// Refresh all supervisor dropdowns in a container to hide already-picked options
+function refreshSupervisorDropdowns(containerId, supervisorsList) {
+    const list = supervisorsList || allSupervisorsAdd;
+    const selects = document.querySelectorAll('#' + containerId + ' select[name="supervisors[]"]');
+    selects.forEach(sel => {
+        const currentVal = sel.value;
+        const takenIds = getSelectedSupervisorIds(containerId, sel);
+        sel.innerHTML = '<option value="">Select Supervisor</option>';
+        list.forEach(s => {
+            const sid = String(s.id);
+            if (!takenIds.includes(sid) || sid === currentVal) {
+                const opt = document.createElement('option');
+                opt.value = sid;
+                opt.textContent = s.full_name;
+                if (sid === currentVal) opt.selected = true;
+                sel.appendChild(opt);
+            }
+        });
+    });
+}
 
 function addSupervisorRow() {
     const container = document.getElementById('supervisors-container');
+    const takenIds = getSelectedSupervisorIds('supervisors-container', null);
     const newRow = document.createElement('div');
     newRow.classList.add('supervisor-row', 'row', 'mb-2');
 
+    let options = '<option value="">Select Supervisor</option>';
+    allSupervisorsAdd.forEach(s => {
+        if (!takenIds.includes(String(s.id))) {
+            options += `<option value="${s.id}">${s.full_name}</option>`;
+        }
+    });
+
     newRow.innerHTML = `
         <div class="col">
-            <select name="supervisors[]" class="form-select" required>
-                <option value="">Select Supervisor</option>
-                ${supervisorOptions}
+            <select name="supervisors[]" class="form-select" required onchange="refreshSupervisorDropdowns('supervisors-container')">
+                ${options}
             </select>
         </div>
         <div class="col-auto">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.supervisor-row').remove()">-</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.supervisor-row').remove(); refreshSupervisorDropdowns('supervisors-container')">-</button>
         </div>
     `;
     container.appendChild(newRow);

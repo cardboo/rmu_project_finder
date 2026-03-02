@@ -22,6 +22,12 @@ $totalProjects = $totalQuery->get_result()->fetch_assoc()['total'];
 $deptQuery = $conn->prepare("SELECT COUNT(*) AS total FROM departments");
 $deptQuery->execute();
 $totalDepartments = $deptQuery->get_result()->fetch_assoc()['total'];
+
+// Recent audit logs (last 20)
+$auditQuery = $conn->prepare("SELECT username, action, details, ip_address, created_at FROM audit_log ORDER BY created_at DESC LIMIT 20");
+$auditQuery->execute();
+$auditResult = $auditQuery->get_result();
+$auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
 ?>
 
 
@@ -142,9 +148,42 @@ $totalDepartments = $deptQuery->get_result()->fetch_assoc()['total'];
     </div>
 
   </div>
+
+  <!-- Audit Log Section -->
+  <div class="mt-5">
+    <h4 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Recent Activity Log</h4>
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Details</th>
+            <th>IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($auditLogs)): ?>
+            <tr><td colspan="5" class="text-center text-muted fst-italic">No activity recorded yet.</td></tr>
+          <?php else: ?>
+            <?php foreach ($auditLogs as $log): ?>
+              <tr>
+                <td style="white-space:nowrap; font-size:13px;"><?= htmlspecialchars(date('M j, Y g:ia', strtotime($log['created_at']))) ?></td>
+                <td><strong><?= htmlspecialchars($log['username']) ?></strong></td>
+                <td><span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; background:var(--uni-navy-soft); color:var(--uni-navy);"><?= htmlspecialchars(str_replace('_', ' ', $log['action'])) ?></span></td>
+                <td style="font-size:13px; color:var(--uni-text-muted); max-width:400px;"><?= htmlspecialchars($log['details']) ?></td>
+                <td style="font-size:12px; font-family:monospace; color:var(--uni-text-muted);"><?= htmlspecialchars($log['ip_address']) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-     
+
   <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
   <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/sidebarmenu.js"></script>

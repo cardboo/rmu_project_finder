@@ -286,7 +286,7 @@
     height: 36px;
     border-radius: 8px;
     object-fit: cover;
-    opacity: 0.12;
+    opacity: 1.5;
     pointer-events: none;
   }
 
@@ -635,7 +635,7 @@
   <div class="search-box">
     <div class="search-input-wrap">
       <input type="text" id="searchInput" placeholder="Search by project title, student name, tag, or keyword..." autocomplete="off" />
-      <button onclick="performSearch()">Search</button>
+      <!-- <button onclick="performSearch()">Search</button> -->
     </div>
     <div class="filters">
       <select id="departmentFilter">

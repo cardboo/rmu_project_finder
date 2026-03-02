@@ -20,11 +20,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $_SESSION['dep_id'] = $row['dep_id'];
             $_SESSION['dep_name'] = $row['dep_name'];
 
-            // Alert success and redirect
-            echo "<script>
-                    alert('Login successful! Redirecting to dashboard...');
-                    window.location.href = '../dashboard/';
-                  </script>";
+            // Redirect to dashboard
+            header("Location: ../dashboard/");
+
             exit();
         } else {
             echo "<script>

@@ -286,7 +286,7 @@
     height: 36px;
     border-radius: 8px;
     object-fit: cover;
-    opacity: 1.5;
+    opacity: 0.12;
     pointer-events: none;
   }
 

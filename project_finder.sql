@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS `projects` (
   `year` int NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `file_path` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `is_archived` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

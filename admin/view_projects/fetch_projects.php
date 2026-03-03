@@ -16,7 +16,7 @@ $sort = $_GET['sort'] ?? 'year_desc';
 // ============================
 // Build WHERE conditions
 // ============================
-$where  = [];
+$where  = ["(p.is_archived = 0 OR p.is_archived IS NULL)"];
 $params = [];
 $types  = "";
 

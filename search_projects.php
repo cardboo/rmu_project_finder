@@ -130,8 +130,11 @@ if ($tag !== '') {
     $types   .= 's';
 }
 
-// If no filters at all, return empty
-if (empty($where)) {
+// Always exclude archived projects
+$where[] = "(p.is_archived = 0 OR p.is_archived IS NULL)";
+
+// If only the archive filter (no user filters), return empty
+if (count($where) <= 1) {
     echo json_encode([]);
     exit;
 }

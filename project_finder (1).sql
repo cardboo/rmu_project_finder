@@ -142,9 +142,9 @@ CREATE TABLE IF NOT EXISTS `projects` (
   `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `synopsis` text COLLATE utf8mb4_general_ci NOT NULL,
   `year` int NOT NULL,
-  `status` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `file_path` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `is_archived` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

@@ -13,8 +13,8 @@ if (!$conn) {
 }
 
 
-// Total projects
-$totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects");
+// Total projects (exclude archived)
+$totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects WHERE is_archived = 0 OR is_archived IS NULL");
 $totalQuery->execute();
 $totalProjects = $totalQuery->get_result()->fetch_assoc()['total'];
 

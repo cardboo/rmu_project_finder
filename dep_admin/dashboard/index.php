@@ -14,8 +14,8 @@ if (!$conn) {
 
 $dep_id = $_SESSION['dep_id']; // To get only your department's projects
 
-// Total projects
-$totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects WHERE dep_id = ?");
+// Total projects (exclude archived)
+$totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects WHERE dep_id = ? AND (is_archived = 0 OR is_archived IS NULL)");
 $totalQuery->bind_param("s", $dep_id);
 $totalQuery->execute();
 $totalResult = $totalQuery->get_result()->fetch_assoc();

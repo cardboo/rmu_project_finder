@@ -15,29 +15,31 @@ if (!$conn) {
 $dep_id = $_SESSION['dep_id'];
 $dep_name = $_SESSION['dep_name'];
 
-/** ✅ Fetch all projects for this department **/
- $sql = "
-SELECT 
+/** Fetch all projects for this department **/
+$showArchived = isset($_GET['show_archived']) && $_GET['show_archived'] === '1';
+
+$sql = "
+SELECT
     p.id AS project_id,
     p.title AS project_title,
     p.synopsis AS description,
     p.year,
-    p.file_path,   -- FIXED
+    p.file_path,
+    p.is_archived,
     m.student_name,
     m.index_number,
     t.name AS tag_name,
     ps.supervisor_id,
     s.first_name,
     s.last_name
-
 FROM projects p
 LEFT JOIN project_members m ON p.id = m.project_id
- LEFT JOIN project_tags pt ON p.id = pt.project_id
- LEFT JOIN tags t ON pt.tag_id = t.id
- LEFT JOIN project_supervisors ps ON p.id = ps.project_id
- LEFT JOIN supervisors s ON ps.supervisor_id = s.id
- WHERE p.dep_id = ?
- ORDER BY p.year DESC, p.id";
+LEFT JOIN project_tags pt ON p.id = pt.project_id
+LEFT JOIN tags t ON pt.tag_id = t.id
+LEFT JOIN project_supervisors ps ON p.id = ps.project_id
+LEFT JOIN supervisors s ON ps.supervisor_id = s.id
+WHERE p.dep_id = ?
+ORDER BY p.is_archived ASC, p.year DESC, p.id";
 
 
 
@@ -68,10 +70,11 @@ while ($row = $projectResult->fetch_assoc()) {
             'project_title' => $row['project_title'],
             'description' => $row['description'],
             'year' => $row['year'],
-            'file_path' => $row['file_path'] ?? '', // add file path
+            'file_path' => $row['file_path'] ?? '',
+            'is_archived' => $row['is_archived'] ?? 0,
             'members' => [],
             'tags' => [],
-            'supervisors' => [] // initialize supervisors
+            'supervisors' => []
         ];
     }
 
@@ -207,12 +210,13 @@ while ($row = $projectResult->fetch_assoc()) {
       </header>
 <div class="container content-container">
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h2>Projects for Department: <?= htmlspecialchars($dep_name) ?></h2>
-    <div>
-      <!-- Buttons trigger modals -->
-      <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addProjectModal">Add a New Project</button>
-     
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <a href="?show_archived=<?= $showArchived ? '0' : '1' ?>" class="btn <?= $showArchived ? 'btn-outline-secondary' : 'btn-outline-primary' ?> btn-sm">
+        <?= $showArchived ? 'Hide Archived' : 'Show Archived' ?>
+      </a>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">Add a New Project</button>
     </div>
   </div>
 
@@ -232,50 +236,70 @@ while ($row = $projectResult->fetch_assoc()) {
             </tr>
         </thead>
         <tbody>
-            <?php if (empty($projects)): ?>
+            <?php
+                // Separate active and archived
+                $activeProjects = array_filter($projects, fn($p) => !$p['is_archived']);
+                $archivedProjects = array_filter($projects, fn($p) => $p['is_archived']);
+                $displayProjects = $showArchived ? $projects : $activeProjects;
+            ?>
+            <?php if (empty($displayProjects)): ?>
                 <tr>
                     <td colspan="8" class="text-center">No projects found.</td>
                 </tr>
             <?php else: ?>
                 <?php $counter = 1; ?>
-                <?php foreach ($projects as $proj): ?>
+                <?php foreach ($displayProjects as $proj): ?>
                     <?php
-                        // Prepare members list for display
                         $memberList = array_map(function ($m) {
                             return htmlspecialchars($m['student_name'] . ' (' . $m['index_number'] . ')');
                         }, $proj['members']);
                         $membersDisplay = implode(', ', $memberList);
-
-                        // Prepare tags list for display
                         $tagsDisplay = implode(', ', array_map('htmlspecialchars', $proj['tags']));
-
-                       $supervisorDisplay = implode(', ', array_map(fn($s) => htmlspecialchars($s['full_name']), $proj['supervisors']));
-
+                        $supervisorDisplay = implode(', ', array_map(fn($s) => htmlspecialchars($s['full_name']), $proj['supervisors']));
+                        $isArchived = $proj['is_archived'];
                     ?>
-                    <tr>
+                    <tr<?= $isArchived ? ' style="opacity:0.6;"' : '' ?>>
                         <td><?= $counter++ ?></td>
-                        <td><?= htmlspecialchars($proj['project_title']) ?></td>
+                        <td>
+                            <?= htmlspecialchars($proj['project_title']) ?>
+                            <?php if ($isArchived): ?>
+                                <span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; background:#dc3545; color:#fff; margin-left:6px; vertical-align:middle;">ARCHIVED</span>
+                            <?php endif; ?>
+                        </td>
                         <td><?= htmlspecialchars($proj['description']) ?></td>
                         <td><?= htmlspecialchars($proj['year']) ?></td>
                         <td><?= $membersDisplay ?></td>
-                       <td><?= $supervisorDisplay ?: 'No supervisor assigned' ?></td>
+                        <td><?= $supervisorDisplay ?: 'No supervisor assigned' ?></td>
                         <td><?= $tagsDisplay ?></td>
-                        <td>
-              <button class="btn btn-sm btn-warning edit-btn"
-    data-id="<?= $proj['id'] ?>"
-    data-title="<?= htmlspecialchars($proj['project_title'], ENT_QUOTES) ?>"
-    data-description="<?= htmlspecialchars($proj['description'], ENT_QUOTES) ?>"
-    data-year="<?= $proj['year'] ?>"
-    data-tags="<?= htmlspecialchars(implode(',', $proj['tags']), ENT_QUOTES) ?>"
-    data-file="<?= htmlspecialchars($proj['file_path'], ENT_QUOTES) ?>"
-    data-members='<?= json_encode($proj["members"], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
-    data-supervisors='<?= json_encode(array_column($proj["supervisors"], "id"), JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
-    data-supervisors-list='<?= json_encode($supervisors, JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
-    data-bs-toggle="modal"
-    data-bs-target="#editProjectModal">
-    Edit
-</button>
-           
+                        <td style="white-space:nowrap;">
+                            <?php if (!$isArchived): ?>
+                                <button class="btn btn-sm btn-warning edit-btn"
+                                    data-id="<?= $proj['id'] ?>"
+                                    data-title="<?= htmlspecialchars($proj['project_title'], ENT_QUOTES) ?>"
+                                    data-description="<?= htmlspecialchars($proj['description'], ENT_QUOTES) ?>"
+                                    data-year="<?= $proj['year'] ?>"
+                                    data-tags="<?= htmlspecialchars(implode(',', $proj['tags']), ENT_QUOTES) ?>"
+                                    data-file="<?= htmlspecialchars($proj['file_path'], ENT_QUOTES) ?>"
+                                    data-members='<?= json_encode($proj["members"], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+                                    data-supervisors='<?= json_encode(array_column($proj["supervisors"], "id"), JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+                                    data-supervisors-list='<?= json_encode($supervisors, JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editProjectModal">
+                                    Edit
+                                </button>
+                                <form action="archive_project.php" method="POST" style="display:inline;">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="id" value="<?= $proj['id'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to archive this project?');">Archive</button>
+                                </form>
+                            <?php else: ?>
+                                <form action="unarchive_project.php" method="POST" style="display:inline;">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="id" value="<?= $proj['id'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Restore this project?');">Unarchive</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>

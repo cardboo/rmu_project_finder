@@ -12,6 +12,9 @@ $department = $_GET['department'] ?? '';
 $year = $_GET['year'] ?? '';
 $q    = $_GET['q'] ?? '';
 $sort = $_GET['sort'] ?? 'year_desc';
+$page  = max(1, (int)($_GET['page'] ?? 1));
+$limit = 12;
+$offset = ($page - 1) * $limit;
 
 // ============================
 // Build WHERE conditions
@@ -66,10 +69,35 @@ $sortMap = [
 $orderBy = $sortMap[$sort] ?? 'p.year DESC';
 
 // ============================
+// Count total results
+// ============================
+$whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+$countSql = "
+SELECT COUNT(DISTINCT p.id) AS total
+FROM projects p
+LEFT JOIN departments d ON p.dep_id = d.dep_id
+LEFT JOIN project_members pm ON p.id = pm.project_id
+LEFT JOIN project_supervisors ps ON p.id = ps.project_id
+LEFT JOIN supervisors s ON ps.supervisor_id = s.id
+LEFT JOIN project_tags pt ON p.id = pt.project_id
+LEFT JOIN tags t ON pt.tag_id = t.id
+{$whereClause}
+";
+
+$countStmt = $conn->prepare($countSql);
+if ($params) {
+    $countStmt->bind_param($types, ...$params);
+}
+$countStmt->execute();
+$total = $countStmt->get_result()->fetch_assoc()['total'];
+$totalPages = ceil($total / $limit);
+
+// ============================
 // Main SQL
 // ============================
 $sql = "
-SELECT 
+SELECT
     p.id,
     p.title,
     p.synopsis,
@@ -86,17 +114,21 @@ LEFT JOIN project_supervisors ps ON p.id = ps.project_id
 LEFT JOIN supervisors s ON ps.supervisor_id = s.id
 LEFT JOIN project_tags pt ON p.id = pt.project_id
 LEFT JOIN tags t ON pt.tag_id = t.id
-" . (!empty($where) ? "WHERE " . implode(" AND ", $where) : "") . "
+{$whereClause}
 GROUP BY p.id
 ORDER BY $orderBy
+LIMIT ? OFFSET ?
 ";
 
 // ============================
 // Prepare & Execute
 // ============================
+$paginatedTypes = $types . 'ii';
+$paginatedParams = array_merge($params, [$limit, $offset]);
+
 $stmt = $conn->prepare($sql);
-if ($params) {
-    $stmt->bind_param($types, ...$params);
+if ($paginatedParams) {
+    $stmt->bind_param($paginatedTypes, ...$paginatedParams);
 }
 $stmt->execute();
 $result = $stmt->get_result();
@@ -104,7 +136,7 @@ $result = $stmt->get_result();
 // ============================
 // Output HTML rows
 // ============================
-$i = 1;
+$i = $offset + 1;
 $hasRows = false;
 while ($p = $result->fetch_assoc()):
     $hasRows = true;
@@ -139,3 +171,6 @@ while ($p = $result->fetch_assoc()):
 if (!$hasRows): ?>
 <tr><td colspan="9" class="text-center">No projects found</td></tr>
 <?php endif; ?>
+
+<!-- Pagination data attribute for JS -->
+<tr class="pagination-data" style="display:none;" data-total="<?= $total ?>" data-page="<?= $page ?>" data-pages="<?= $totalPages ?>"></tr>

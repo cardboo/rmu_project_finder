@@ -231,6 +231,9 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
         </tbody>
 
     </table>
+
+    <!-- Pagination -->
+    <nav id="paginationNav" class="d-flex justify-content-center mt-3"></nav>
 </div>
 
 </body>
@@ -334,21 +337,25 @@ viewModal.addEventListener('show.bs.modal', function (event) {
 </script>
 
 <script>
+let adminCurrentPage = 1;
 const filters = ['department', 'year', 'search', 'sort', 'supervisor', 'tag'];
 
 filters.forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('input', fetchProjects);
+  if (el) el.addEventListener('input', () => { adminCurrentPage = 1; fetchProjects(); });
 });
 
-function fetchProjects() {
+function fetchProjects(page) {
+  if (page !== undefined) adminCurrentPage = page;
+
   const params = new URLSearchParams({
     department: document.getElementById('department').value,
     year: document.getElementById('year').value,
     q: document.getElementById('search').value,
     sort: document.getElementById('sort').value,
     supervisor: document.getElementById('supervisor').value,
-    tag: document.getElementById('tag').value
+    tag: document.getElementById('tag').value,
+    page: adminCurrentPage
   });
 
   fetch('fetch_projects.php?' + params.toString())
@@ -358,27 +365,63 @@ function fetchProjects() {
     })
     .then(html => {
       document.querySelector('tbody').innerHTML = html;
-      // Update result count
-      const rows = document.querySelectorAll('tbody tr');
-      const count = rows.length;
-      const countEl = document.getElementById('resultCount');
-      if (count === 1 && rows[0].querySelector('td[colspan]')) {
-        countEl.textContent = '0 projects found';
-      } else {
-        countEl.textContent = count + ' project' + (count !== 1 ? 's' : '') + ' found';
+
+      // Extract pagination data
+      const paginationRow = document.querySelector('tbody .pagination-data');
+      let total = 0, currentPage = 1, totalPages = 0;
+      if (paginationRow) {
+        total = parseInt(paginationRow.dataset.total) || 0;
+        currentPage = parseInt(paginationRow.dataset.page) || 1;
+        totalPages = parseInt(paginationRow.dataset.pages) || 0;
       }
+
+      const countEl = document.getElementById('resultCount');
+      countEl.textContent = total > 0 ? total + ' project' + (total !== 1 ? 's' : '') + ' found' : '0 projects found';
+
+      renderAdminPagination(currentPage, totalPages);
     })
     .catch(error => {
       console.error('Error fetching projects:', error);
       document.querySelector('tbody').innerHTML = '<tr><td colspan="9" class="text-center">Error loading projects</td></tr>';
       document.getElementById('resultCount').textContent = '';
+      document.getElementById('paginationNav').innerHTML = '';
     });
+}
+
+function renderAdminPagination(current, totalPages) {
+  const nav = document.getElementById('paginationNav');
+  if (totalPages <= 1) { nav.innerHTML = ''; return; }
+
+  let html = '<ul class="pagination mb-0">';
+  html += `<li class="page-item ${current === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="event.preventDefault(); fetchProjects(${current - 1});">&laquo;</a></li>`;
+
+  const pages = [];
+  pages.push(1);
+  if (current > 3) pages.push('...');
+  for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
+    pages.push(i);
+  }
+  if (current < totalPages - 2) pages.push('...');
+  if (totalPages > 1) pages.push(totalPages);
+
+  pages.forEach(p => {
+    if (p === '...') {
+      html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+    } else {
+      html += `<li class="page-item ${p === current ? 'active' : ''}"><a class="page-link" href="#" onclick="event.preventDefault(); fetchProjects(${p});">${p}</a></li>`;
+    }
+  });
+
+  html += `<li class="page-item ${current === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="event.preventDefault(); fetchProjects(${current + 1});">&raquo;</a></li>`;
+  html += '</ul>';
+  nav.innerHTML = html;
 }
 
 // Column header sort toggle
 function sortByColumn(ascVal, descVal) {
   const sortEl = document.getElementById('sort');
   sortEl.value = (sortEl.value === ascVal) ? descVal : ascVal;
+  adminCurrentPage = 1;
   fetchProjects();
 }
 

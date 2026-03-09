@@ -664,6 +664,59 @@
     font-style: italic;
   }
 
+  /* === PAGINATION === */
+  .pagination-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+
+  .pagination-bar button {
+    min-width: 40px;
+    height: 40px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+  }
+
+  .pagination-bar button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .pagination-bar button.active {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+  }
+
+  .pagination-bar button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .pagination-bar .page-ellipsis {
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
   /* === EMPTY / LOADING STATE === */
   .empty-state {
     text-align: center;
@@ -763,11 +816,13 @@
       <p>Enter a keyword above or click a tag to browse projects</p>
     </div>
   </div>
+  <div class="pagination-bar" id="paginationBar"></div>
 </div>
 
 <script>
 let debounceTimer;
 let activeTag = '';
+let currentPage = 1;
 
 // === INIT: Load filters and tag cloud ===
 async function loadFilters() {
@@ -818,7 +873,9 @@ function escapeHtml(text) {
 }
 
 // === SEARCH ===
-async function performSearch() {
+async function performSearch(page) {
+  if (page !== undefined) currentPage = page;
+
   const query = document.getElementById('searchInput').value.trim();
   const department = document.getElementById('departmentFilter').value;
   const year = document.getElementById('yearFilter').value;
@@ -828,6 +885,7 @@ async function performSearch() {
   if (department) params.set('department', department);
   if (year) params.set('year', year);
   if (activeTag) params.set('tag', activeTag);
+  params.set('page', currentPage);
 
   if (!query && !department && !year && !activeTag) {
     document.getElementById('results').innerHTML = `
@@ -837,17 +895,22 @@ async function performSearch() {
         <p>Enter a keyword above or click a tag to browse projects</p>
       </div>`;
     document.getElementById('resultCount').textContent = '';
+    document.getElementById('paginationBar').innerHTML = '';
     return;
   }
 
   document.getElementById('results').innerHTML = '<div class="loading">Searching...</div>';
+  document.getElementById('paginationBar').innerHTML = '';
 
   try {
     const res = await fetch('search_projects.php?' + params.toString());
-    const projects = await res.json();
+    const data = await res.json();
 
     const resultsDiv = document.getElementById('results');
     const countEl = document.getElementById('resultCount');
+    const projects = data.projects;
+    const total = data.total;
+    const totalPages = data.pages;
 
     if (projects.length === 0) {
       resultsDiv.innerHTML = `
@@ -860,8 +923,9 @@ async function performSearch() {
       return;
     }
 
-    countEl.textContent = projects.length + ' project' + (projects.length !== 1 ? 's' : '') + ' found';
+    countEl.textContent = total + ' project' + (total !== 1 ? 's' : '') + ' found';
     resultsDiv.innerHTML = projects.map(project => renderCard(project)).join('');
+    renderPagination(currentPage, totalPages);
 
   } catch (error) {
     console.error('Search error:', error);
@@ -872,6 +936,40 @@ async function performSearch() {
         <p>Please try again</p>
       </div>`;
   }
+}
+
+function renderPagination(current, totalPages) {
+  const bar = document.getElementById('paginationBar');
+  if (totalPages <= 1) { bar.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button ${current === 1 ? 'disabled' : ''} onclick="goToPage(${current - 1})">&laquo; Prev</button>`;
+
+  // Show page numbers with ellipsis
+  const pages = [];
+  pages.push(1);
+  if (current > 3) pages.push('...');
+  for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
+    pages.push(i);
+  }
+  if (current < totalPages - 2) pages.push('...');
+  if (totalPages > 1) pages.push(totalPages);
+
+  pages.forEach(p => {
+    if (p === '...') {
+      html += '<span class="page-ellipsis">...</span>';
+    } else {
+      html += `<button class="${p === current ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+    }
+  });
+
+  html += `<button ${current === totalPages ? 'disabled' : ''} onclick="goToPage(${current + 1})">Next &raquo;</button>`;
+  bar.innerHTML = html;
+}
+
+function goToPage(page) {
+  window.scrollTo({ top: document.querySelector('.results-section').offsetTop - 20, behavior: 'smooth' });
+  performSearch(page);
 }
 
 function renderCard(p) {
@@ -917,7 +1015,7 @@ function searchByTag(tagName, chipEl) {
     activeTag = tagName;
     if (chipEl) chipEl.classList.add('active');
   }
-  performSearch();
+  performSearch(1);
 }
 
 function searchByTagName(tagName) {
@@ -927,7 +1025,7 @@ function searchByTagName(tagName) {
     const chipText = c.textContent.replace(/\s*\(\d+\)\s*$/, '').trim();
     c.classList.toggle('active', chipText === tagName);
   });
-  performSearch();
+  performSearch(1);
 }
 
 function clearFilters() {
@@ -935,6 +1033,7 @@ function clearFilters() {
   document.getElementById('departmentFilter').value = '';
   document.getElementById('yearFilter').value = '';
   activeTag = '';
+  currentPage = 1;
   document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
   document.getElementById('results').innerHTML = `
     <div class="empty-state">
@@ -943,23 +1042,24 @@ function clearFilters() {
       <p>Enter a keyword above or click a tag to browse projects</p>
     </div>`;
   document.getElementById('resultCount').textContent = '';
+  document.getElementById('paginationBar').innerHTML = '';
 }
 
 // === EVENT LISTENERS ===
 document.getElementById('searchInput').addEventListener('input', () => {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(performSearch, 350);
+  debounceTimer = setTimeout(() => performSearch(1), 350);
 });
 
 document.getElementById('searchInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     clearTimeout(debounceTimer);
-    performSearch();
+    performSearch(1);
   }
 });
 
-document.getElementById('departmentFilter').addEventListener('change', performSearch);
-document.getElementById('yearFilter').addEventListener('change', performSearch);
+document.getElementById('departmentFilter').addEventListener('change', () => performSearch(1));
+document.getElementById('yearFilter').addEventListener('change', () => performSearch(1));
 
 // Init
 loadFilters();

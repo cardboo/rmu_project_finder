@@ -6,6 +6,9 @@ $query      = trim($_GET['query'] ?? '');
 $department = trim($_GET['department'] ?? '');
 $year       = trim($_GET['year'] ?? '');
 $tag        = trim($_GET['tag'] ?? '');
+$page       = max(1, (int)($_GET['page'] ?? 1));
+$limit      = 12;
+$offset     = ($page - 1) * $limit;
 
 /**
  * Simple English stemmer - strips common suffixes to find word roots.
@@ -135,11 +138,32 @@ $where[] = "(p.is_archived = 0 OR p.is_archived IS NULL)";
 
 // If only the archive filter (no user filters), return empty
 if (count($where) <= 1) {
-    echo json_encode([]);
+    echo json_encode(['projects' => [], 'total' => 0, 'page' => 1, 'pages' => 0]);
     exit;
 }
 
 $whereSql = implode(' AND ', $where);
+
+// Count total matching projects
+$countSql = "
+SELECT COUNT(DISTINCT p.id) AS total
+FROM projects p
+JOIN departments d ON p.dep_id = d.dep_id
+LEFT JOIN project_members pm ON p.id = pm.project_id
+LEFT JOIN project_tags pt ON p.id = pt.project_id
+LEFT JOIN tags t ON pt.tag_id = t.id
+LEFT JOIN project_supervisors ps ON p.id = ps.project_id
+LEFT JOIN supervisors s ON ps.supervisor_id = s.id
+WHERE {$whereSql}
+";
+
+$countStmt = $conn->prepare($countSql);
+if ($params) {
+    $countStmt->bind_param($types, ...$params);
+}
+$countStmt->execute();
+$total = $countStmt->get_result()->fetch_assoc()['total'];
+$totalPages = ceil($total / $limit);
 
 $sql = "
 SELECT
@@ -162,12 +186,15 @@ LEFT JOIN supervisors s ON ps.supervisor_id = s.id
 WHERE {$whereSql}
 GROUP BY p.id
 ORDER BY p.year DESC
-LIMIT 50
+LIMIT ? OFFSET ?
 ";
 
+$paginatedTypes = $types . 'ii';
+$paginatedParams = array_merge($params, [$limit, $offset]);
+
 $stmt = $conn->prepare($sql);
-if ($params) {
-    $stmt->bind_param($types, ...$params);
+if ($paginatedParams) {
+    $stmt->bind_param($paginatedTypes, ...$paginatedParams);
 }
 $stmt->execute();
 $result = $stmt->get_result();
@@ -177,4 +204,9 @@ while ($row = $result->fetch_assoc()) {
     $projects[] = $row;
 }
 
-echo json_encode($projects);
+echo json_encode([
+    'projects' => $projects,
+    'total' => (int)$total,
+    'page' => $page,
+    'pages' => (int)$totalPages
+]);

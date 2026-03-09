@@ -17,6 +17,8 @@ $dep_name = $_SESSION['dep_name'];
 
 /** Fetch all projects for this department **/
 $showArchived = isset($_GET['show_archived']) && $_GET['show_archived'] === '1';
+$page = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 12;
 
 $sql = "
 SELECT
@@ -248,14 +250,19 @@ while ($row = $projectResult->fetch_assoc()) {
                 // Separate active and archived
                 $activeProjects = array_filter($projects, fn($p) => !$p['is_archived']);
                 $archivedProjects = array_filter($projects, fn($p) => $p['is_archived']);
-                $displayProjects = $showArchived ? $projects : $activeProjects;
+                $allDisplayProjects = $showArchived ? $projects : $activeProjects;
+                $totalProj = count($allDisplayProjects);
+                $totalPages = ceil($totalProj / $perPage);
+                $page = min($page, max(1, $totalPages));
+                $displayProjects = array_slice(array_values($allDisplayProjects), ($page - 1) * $perPage, $perPage);
+                $startNum = ($page - 1) * $perPage;
             ?>
             <?php if (empty($displayProjects)): ?>
                 <tr>
                     <td colspan="8" class="text-center">No projects found.</td>
                 </tr>
             <?php else: ?>
-                <?php $counter = 1; ?>
+                <?php $counter = $startNum + 1; ?>
                 <?php foreach ($displayProjects as $proj): ?>
                     <?php
                         $memberList = array_map(function ($m) {
@@ -313,6 +320,49 @@ while ($row = $projectResult->fetch_assoc()) {
             <?php endif; ?>
         </tbody>
     </table>
+
+    <?php if ($totalPages > 1): ?>
+    <nav class="d-flex justify-content-center mt-3">
+      <ul class="pagination mb-0">
+        <?php
+          // Build current URL params (preserve show_archived)
+          $urlParams = [];
+          if ($showArchived) $urlParams['show_archived'] = '1';
+        ?>
+        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+          <a class="page-link" href="?<?= http_build_query(array_merge($urlParams, ['page' => $page - 1])) ?>">&laquo;</a>
+        </li>
+        <?php
+          $pages = [1];
+          if ($page > 3) $pages[] = '...';
+          for ($i = max(2, $page - 1); $i <= min($totalPages - 1, $page + 1); $i++) {
+            $pages[] = $i;
+          }
+          if ($page < $totalPages - 2) $pages[] = '...';
+          if ($totalPages > 1) $pages[] = $totalPages;
+
+          foreach ($pages as $pg):
+            if ($pg === '...'):
+        ?>
+              <li class="page-item disabled"><span class="page-link">...</span></li>
+        <?php else: ?>
+              <li class="page-item <?= $pg === $page ? 'active' : '' ?>">
+                <a class="page-link" href="?<?= http_build_query(array_merge($urlParams, ['page' => $pg])) ?>"><?= $pg ?></a>
+              </li>
+        <?php
+            endif;
+          endforeach;
+        ?>
+        <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+          <a class="page-link" href="?<?= http_build_query(array_merge($urlParams, ['page' => $page + 1])) ?>">&raquo;</a>
+        </li>
+      </ul>
+    </nav>
+    <?php endif; ?>
+
+    <p class="text-center text-muted mt-2 mb-0" style="font-size:13px;">
+      Showing <?= $startNum + 1 ?>–<?= min($startNum + $perPage, $totalProj) ?> of <?= $totalProj ?> project<?= $totalProj !== 1 ? 's' : '' ?>
+    </p>
 </div>
 
 <!-- Add Single Project Modal -->

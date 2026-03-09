@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# rmu_project_finder
-
-=======
 # RMU Student Project Repository
 
 A web-based project repository system built for **Regional Maritime University (RMU)** that enables departments to manage, archive, and showcase student academic projects. The system provides three interfaces: an **Admin Panel**, a **Department Admin Panel**, and a **Student Search Portal**.
@@ -70,6 +66,7 @@ The application follows a traditional PHP/MySQL server-side architecture with AJ
 | **Department Management** | Add, edit, and archive departments. Upload departments via Excel files |
 | **View All Projects** | Browse projects from every department with filters (department, year, supervisor, tag), search, sorting (by title, year, department), result count, and CSV export |
 | **Project Details Modal** | View full project details including embedded PDF preview |
+| **Change Password** | Change password from within the dashboard (requires current password, minimum 8 characters) |
 | **Forgot Password** | Token-based password reset via email (1-hour expiry) |
 | **Audit Logging** | All sensitive operations (create, update, archive) are logged with timestamp, user, IP address |
 
@@ -84,6 +81,8 @@ The application follows a traditional PHP/MySQL server-side architecture with AJ
 | **PDF Preview** | Live PDF preview when uploading or editing project files |
 | **File Replace** | Replace existing project files with detailed error reporting for upload failures |
 | **Smart Supervisor Dropdown** | When adding multiple supervisors to a project, already-selected supervisors are automatically hidden from other dropdowns |
+| **Archive/Unarchive Projects** | Soft-delete projects with archive/restore functionality and audit logging |
+| **Change Password** | Change password from within the dashboard (requires current password, minimum 8 characters) |
 | **Forgot Password** | Token-based password reset via email |
 
 ### Student Search Portal (`/index.php`)
@@ -177,6 +176,9 @@ rmu_project_finder/
 |   |-- view_projects/
 |   |   |-- index.php            # All-projects view with filters
 |   |   +-- fetch_projects.php   # AJAX: filtered project data
+|   |-- change_password/
+|   |   |-- index.php            # Change password form
+|   |   +-- change_password.inc.php # Change password handler
 |   +-- logout/
 |
 |-- dep_admin/                   # Department admin panel
@@ -203,6 +205,9 @@ rmu_project_finder/
 |   |   |-- add_supervisor.php   # Add supervisor handler
 |   |   |-- update_supervisor.php# Update supervisor handler
 |   |   +-- upload_excel.php     # Bulk upload via Excel
+|   |-- change_password/
+|   |   |-- index.php            # Change password form
+|   |   +-- change_password.inc.php # Change password handler
 |   |-- uploads/projects/        # Uploaded PDF files stored here
 |   |-- download.php             # Secure file download handler
 |   +-- logout/
@@ -279,6 +284,7 @@ rmu_project_finder/
 - Views projects across all departments
 - Exports project data as CSV
 - Views system audit logs on dashboard
+- Changes own password from dashboard
 - Resets own password via email
 
 ### Department Admin
@@ -286,6 +292,8 @@ rmu_project_finder/
 - Manages supervisors for their department
 - Uploads project files (PDF abstracts)
 - Bulk upload via Excel files
+- Archives and restores projects
+- Changes own password from dashboard
 - Resets own password via email
 
 ### Students (Public)
@@ -359,4 +367,3 @@ Tags can be manually edited after auto-generation.
 ---
 
 *Regional Maritime University - Student Project Repository System*
->>>>>>> bbf7dc6591ee2d7cac7d32a5613ce2a52ef5fa49

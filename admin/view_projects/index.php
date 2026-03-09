@@ -110,7 +110,14 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
                 <span class="hide-menu"> View Projects</span>
               </a>
             </li>
-           
+            <li class="sidebar-item">
+              <a class="sidebar-link" href="../change_password" aria-expanded="false">
+                <span>
+                  <i class="ti ti-lock"></i>
+                </span>
+                <span class="hide-menu">Change Password</span>
+              </a>
+            </li>
 
             <li class="sidebar-item">
               <a class="sidebar-link" href="../logout" aria-expanded="false">

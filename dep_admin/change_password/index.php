@@ -5,39 +5,24 @@ if (!isset($_SESSION['username'])) {
   die();
 }
 $username = $_SESSION['username'];
-$dep_name=$_SESSION['dep_name'];
-include "../datacon.php";
+$dep_name = $_SESSION['dep_name'];
 
-if (!$conn) {
-  die("Connection failed: " . mysqli_connect_error());
-}
+require '../csrf.php';
 
-$dep_id = $_SESSION['dep_id']; // To get only your department's projects
-
-// Total projects (exclude archived)
-$totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects WHERE dep_id = ? AND (is_archived = 0 OR is_archived IS NULL)");
-$totalQuery->bind_param("s", $dep_id);
-$totalQuery->execute();
-$totalResult = $totalQuery->get_result()->fetch_assoc();
-$totalProjects = $totalResult['total'];
-
-
+$success = $_GET['success'] ?? '';
+$error = $_GET['error'] ?? '';
 ?>
-
-
 
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Department Dashboard</title>
+  <title>Change Password - Department</title>
   <link rel="shortcut icon" type="image/png" href="../assets/images/logos/rmu.jpg" />
   <link rel="stylesheet" href="../assets/css/styles.min.css" />
   <link rel="stylesheet" href="../assets/css/custom-theme.css" />
-
 </head>
-
 
 <body>
   <!--  Body Wrapper -->
@@ -70,8 +55,7 @@ $totalProjects = $totalResult['total'];
                 <span class="hide-menu">Dashboard</span>
               </a>
             </li>
-
-             <li class="sidebar-item">
+            <li class="sidebar-item">
               <a class="sidebar-link" href="../view_projects" aria-expanded="false">
                 <span>
                   <i class="ti ti-article"></i>
@@ -79,7 +63,6 @@ $totalProjects = $totalResult['total'];
                 <span class="hide-menu">Add/ View Projects</span>
               </a>
             </li>
-          
             <li class="sidebar-item">
               <a class="sidebar-link" href="../view_supervisors" aria-expanded="false">
                 <span>
@@ -96,7 +79,6 @@ $totalProjects = $totalResult['total'];
                 <span class="hide-menu">Change Password</span>
               </a>
             </li>
-
             <li class="sidebar-item">
               <a class="sidebar-link" href="../logout" aria-expanded="false">
                 <span>
@@ -114,51 +96,68 @@ $totalProjects = $totalResult['total'];
     <!--  Sidebar End -->
     <!--  Main wrapper -->
     <div class="body-wrapper">
-    
+
         </nav>
       </header>
       <!--  Header End -->
 <div class="container content-container">
   <div class="page-header">
-    <h2>Department Dashboard</h2>
+    <h2>Change Password</h2>
   </div>
-  <div class="row g-4">
 
-    <div class="col-12 col-sm-6 col-md-4">
-      <div class="card stat-card light">
+  <?php if ($success): ?>
+    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+  <?php endif; ?>
+  <?php if ($error): ?>
+    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+  <?php endif; ?>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
         <div class="card-body">
-          <div class="stat-label">Department</div>
-          <div class="stat-value" style="font-size:1.4rem"><?= htmlspecialchars($dep_name); ?></div>
-          <span class="stat-bar"></span>
+          <form action="change_password.inc.php" method="POST" id="changePasswordForm">
+            <?= csrf_field() ?>
+
+            <div class="mb-3">
+              <label for="current_password" class="form-label fw-bold">Current Password</label>
+              <input type="password" class="form-control" id="current_password" name="current_password" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="new_password" class="form-label fw-bold">New Password</label>
+              <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+              <div class="form-text">Minimum 8 characters.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="confirm_password" class="form-label fw-bold">Confirm New Password</label>
+              <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Update Password</button>
+          </form>
         </div>
       </div>
     </div>
-
-    <div class="col-12 col-sm-6 col-md-4">
-      <div class="card stat-card navy">
-        <div class="card-body">
-          <div class="stat-label">Total Projects</div>
-          <div class="stat-value"><?= $totalProjects ?></div>
-          <span class="stat-bar"></span>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 
-    
-
-     
   <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
   <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/sidebarmenu.js"></script>
   <script src="../assets/js/app.min.js"></script>
-  <script src="../assets/libs/apexcharts/dist/apexcharts.min.js"></script>
   <script src="../assets/libs/simplebar/dist/simplebar.js"></script>
-  <script src="../assets/js/dashboard.js"></script>
+  <script>
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+      const newPw = document.getElementById('new_password').value;
+      const confirmPw = document.getElementById('confirm_password').value;
+      if (newPw !== confirmPw) {
+        e.preventDefault();
+        alert('New passwords do not match.');
+      }
+    });
+  </script>
 </body>
-
-
 
 </html>

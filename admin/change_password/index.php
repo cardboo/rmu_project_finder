@@ -6,43 +6,22 @@ if (!isset($_SESSION['username'])) {
 }
 $username = $_SESSION['username'];
 
-include "../datacon.php";
+require '../csrf.php';
 
-if (!$conn) {
-  die("Connection failed: " . mysqli_connect_error());
-}
-
-
-// Total projects (exclude archived)
-$totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects WHERE is_archived = 0 OR is_archived IS NULL");
-$totalQuery->execute();
-$totalProjects = $totalQuery->get_result()->fetch_assoc()['total'];
-
-// Total departments
-$deptQuery = $conn->prepare("SELECT COUNT(*) AS total FROM departments");
-$deptQuery->execute();
-$totalDepartments = $deptQuery->get_result()->fetch_assoc()['total'];
-
-// Recent audit logs (last 20)
-$auditQuery = $conn->prepare("SELECT username, action, details, ip_address, created_at FROM audit_log ORDER BY created_at DESC LIMIT 20");
-$auditQuery->execute();
-$auditResult = $auditQuery->get_result();
-$auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
+$success = $_GET['success'] ?? '';
+$error = $_GET['error'] ?? '';
 ?>
-
 
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Dashboard</title>
+  <title>Change Password - Admin</title>
   <link rel="shortcut icon" type="image/png" href="../assets/images/logos/rmu.jpg" />
   <link rel="stylesheet" href="../assets/css/styles.min.css" />
   <link rel="stylesheet" href="../assets/css/custom-theme.css" />
-
 </head>
-
 
 <body>
   <!--  Body Wrapper -->
@@ -75,10 +54,6 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
                 <span class="hide-menu">Dashboard</span>
               </a>
             </li>
-            <!-- <li class="nav-small-cap">
-              <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-              <span class="hide-menu">UI COMPONENTS</span>
-            </li> -->
             <li class="sidebar-item">
               <a class="sidebar-link" href="../view_departments" aria-expanded="false">
                 <span>
@@ -87,7 +62,6 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
                 <span class="hide-menu">Add/ View Departments</span>
               </a>
             </li>
-
             <li class="sidebar-item">
               <a class="sidebar-link" href="../view_projects" aria-expanded="false">
                 <span>
@@ -96,7 +70,6 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
                 <span class="hide-menu">View Projects</span>
               </a>
             </li>
-           
             <li class="sidebar-item">
               <a class="sidebar-link" href="../change_password" aria-expanded="false">
                 <span>
@@ -105,7 +78,6 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
                 <span class="hide-menu">Change Password</span>
               </a>
             </li>
-
             <li class="sidebar-item">
               <a class="sidebar-link" href="../logout" aria-expanded="false">
                 <span>
@@ -114,7 +86,7 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
                 <span class="hide-menu">Logout</span>
               </a>
             </li>
-            
+
         </nav>
         <!-- End Sidebar navigation -->
       </div>
@@ -123,83 +95,68 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
     <!--  Sidebar End -->
     <!--  Main wrapper -->
     <div class="body-wrapper">
-     
-        
+
         </nav>
       </header>
       <!--  Header End -->
 <div class="container content-container">
   <div class="page-header">
-    <h2>Admin Dashboard</h2>
-  </div>
-  <div class="row g-4">
-
-    <div class="col-12 col-sm-6 col-md-4">
-      <div class="card stat-card navy">
-        <div class="card-body">
-          <div class="stat-label">Total Projects</div>
-          <div class="stat-value"><?= $totalProjects ?></div>
-          <span class="stat-bar"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-md-4">
-      <div class="card stat-card accent">
-        <div class="card-body">
-          <div class="stat-label">Departments</div>
-          <div class="stat-value"><?= $totalDepartments ?></div>
-          <span class="stat-bar"></span>
-        </div>
-      </div>
-    </div>
-
+    <h2>Change Password</h2>
   </div>
 
-  <!-- Audit Log Section -->
-  <div class="mt-5">
-    <h4 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Recent Activity Log</h4>
-    <div class="table-responsive">
-      <table class="table table-bordered">
-        <thead class="table-dark">
-          <tr>
-            <th>Time</th>
-            <th>User</th>
-            <th>Action</th>
-            <th>Details</th>
-            <th>IP Address</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php if (empty($auditLogs)): ?>
-            <tr><td colspan="5" class="text-center text-muted fst-italic">No activity recorded yet.</td></tr>
-          <?php else: ?>
-            <?php foreach ($auditLogs as $log): ?>
-              <tr>
-                <td style="white-space:nowrap; font-size:13px;"><?= htmlspecialchars(date('M j, Y g:ia', strtotime($log['created_at']))) ?></td>
-                <td><strong><?= htmlspecialchars($log['username']) ?></strong></td>
-                <td><span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; background:var(--uni-navy-soft); color:var(--uni-navy);"><?= htmlspecialchars(str_replace('_', ' ', $log['action'])) ?></span></td>
-                <td style="font-size:13px; color:var(--uni-text-muted); max-width:400px;"><?= htmlspecialchars($log['details']) ?></td>
-                <td style="font-size:12px; font-family:monospace; color:var(--uni-text-muted);"><?= htmlspecialchars($log['ip_address']) ?></td>
-              </tr>
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </tbody>
-      </table>
+  <?php if ($success): ?>
+    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+  <?php endif; ?>
+  <?php if ($error): ?>
+    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+  <?php endif; ?>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <form action="change_password.inc.php" method="POST" id="changePasswordForm">
+            <?= csrf_field() ?>
+
+            <div class="mb-3">
+              <label for="current_password" class="form-label fw-bold">Current Password</label>
+              <input type="password" class="form-control" id="current_password" name="current_password" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="new_password" class="form-label fw-bold">New Password</label>
+              <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+              <div class="form-text">Minimum 8 characters.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="confirm_password" class="form-label fw-bold">Confirm New Password</label>
+              <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Update Password</button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-
 
   <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
   <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/sidebarmenu.js"></script>
   <script src="../assets/js/app.min.js"></script>
-  <script src="../assets/libs/apexcharts/dist/apexcharts.min.js"></script>
   <script src="../assets/libs/simplebar/dist/simplebar.js"></script>
-  <script src="../assets/js/dashboard.js"></script>
+  <script>
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+      const newPw = document.getElementById('new_password').value;
+      const confirmPw = document.getElementById('confirm_password').value;
+      if (newPw !== confirmPw) {
+        e.preventDefault();
+        alert('New passwords do not match.');
+      }
+    });
+  </script>
 </body>
-
-
 
 </html>

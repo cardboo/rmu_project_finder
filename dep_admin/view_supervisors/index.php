@@ -101,7 +101,15 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
                 <span class="hide-menu">Add/ View Supervisors</span>
               </a>
             </li>
-           
+            <li class="sidebar-item">
+              <a class="sidebar-link" href="../change_password" aria-expanded="false">
+                <span>
+                  <i class="ti ti-lock"></i>
+                </span>
+                <span class="hide-menu">Change Password</span>
+              </a>
+            </li>
+
             <li class="sidebar-item">
               <a class="sidebar-link" href="../logout" aria-expanded="false">
                 <span>
@@ -110,7 +118,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
                 <span class="hide-menu">Logout</span>
               </a>
             </li>
-            
+
         </nav>
         <!-- End Sidebar navigation -->
       </div>

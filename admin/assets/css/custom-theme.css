@@ -350,3 +350,49 @@ table.table tbody td {
 .app-header .sidebartoggler:hover {
   color: var(--uni-accent);
 }
+
+/* === PDF PREVIEW CONTAINERS === */
+.pdf-preview-container {
+  height: 450px;
+}
+
+@media (max-width: 768px) {
+  .pdf-preview-container {
+    height: 300px;
+  }
+}
+
+@media (max-width: 576px) {
+  .pdf-preview-container {
+    height: 220px;
+  }
+}
+
+/* === AUDIT LOG === */
+.audit-details {
+  font-size: 13px;
+  color: var(--uni-text-muted);
+  max-width: 400px;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .audit-details {
+    max-width: none;
+  }
+}
+
+/* === MOBILE TABLE IMPROVEMENTS === */
+@media (max-width: 576px) {
+  table.table thead th,
+  table.table tbody td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+  .page-header h2 {
+    font-size: 1.2rem;
+  }
+  .stat-card .stat-value {
+    font-size: 1.8rem;
+  }
+}

@@ -187,7 +187,7 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
                 <td style="white-space:nowrap; font-size:13px;"><?= htmlspecialchars(date('M j, Y g:ia', strtotime($log['created_at']))) ?></td>
                 <td><strong><?= htmlspecialchars($log['username']) ?></strong></td>
                 <td><span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; background:var(--uni-navy-soft); color:var(--uni-navy);"><?= htmlspecialchars(str_replace('_', ' ', $log['action'])) ?></span></td>
-                <td style="font-size:13px; color:var(--uni-text-muted); max-width:400px;"><?= htmlspecialchars($log['details']) ?></td>
+                <td class="audit-details"><?= htmlspecialchars($log['details']) ?></td>
                 <td style="font-size:12px; font-family:monospace; color:var(--uni-text-muted);"><?= htmlspecialchars($log['ip_address']) ?></td>
               </tr>
             <?php endforeach; ?>

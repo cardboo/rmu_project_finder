@@ -122,8 +122,8 @@ while ($row = $projectResult->fetch_assoc()) {
   <style>
   /* Page-specific column styles */
   table.table tbody td:first-child { font-weight: 600; color: var(--uni-navy); text-align: center; white-space: nowrap; }
-  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); min-width: 220px; }
-  table.table tbody td:nth-child(3) { color: var(--uni-text-muted); max-width: 360px; }
+  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); }
+  table.table tbody td:nth-child(3) { color: var(--uni-text-muted); }
   table.table tbody td:nth-child(4) { font-weight: 600; text-align: center; white-space: nowrap; }
   table.table tbody td:nth-child(5),
   table.table tbody td:nth-child(6),
@@ -132,7 +132,9 @@ while ($row = $projectResult->fetch_assoc()) {
   .edit-btn { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-radius: 6px; transition: transform 0.15s, box-shadow 0.15s; }
   .edit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); }
   table.table tbody tr td.text-center { font-style: italic; color: var(--uni-text-muted); padding: 24px; background-color: #fafafa; }
-  .modal-dialog { margin-top: 5vh; }
+  @media (min-width: 769px) {
+    .modal-dialog { margin-top: 5vh; }
+  }
   textarea.form-control { resize: vertical; }
   input[type="file"] { font-size: 13px; }
 </style>
@@ -425,7 +427,7 @@ while ($row = $projectResult->fetch_assoc()) {
             <div class="mt-3">
   <label class="form-label fw-bold">File Preview</label>
 
-  <div id="filePreviewWrapper" class="border rounded" style="height: 400px; display: none;">
+  <div id="filePreviewWrapper" class="border rounded pdf-preview-container" style="display: none;">
     <iframe
       id="filePreviewFrame"
       width="100%"
@@ -517,7 +519,7 @@ while ($row = $projectResult->fetch_assoc()) {
         <div class="mt-3">
         <label class="form-label fw-bold">Current / New File Preview</label>
 
-        <div id="editFilePreviewWrapper" class="border rounded" style="height: 400px; display: none;">
+        <div id="editFilePreviewWrapper" class="border rounded pdf-preview-container" style="display: none;">
           <iframe
             id="editFilePreviewFrame"
             width="100%"

@@ -42,12 +42,14 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
   <style>
   /* Page-specific column styles */
   table.table tbody td:first-child { font-weight: 600; color: var(--uni-navy); text-align: center; white-space: nowrap; }
-  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); min-width: 200px; }
+  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); }
   table.table tbody td:last-child { text-align: center; white-space: nowrap; }
   .edit-btn { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-radius: 6px; transition: transform 0.15s, box-shadow 0.15s; }
   .edit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); }
   table.table tbody tr td.text-center { font-style: italic; color: var(--uni-text-muted); padding: 24px; background-color: #fafafa; }
-  .modal-dialog { margin-top: 5vh; }
+  @media (min-width: 769px) {
+    .modal-dialog { margin-top: 5vh; }
+  }
   input[type="file"] { font-size: 13px; }
 </style>
 

@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
           <div class="col-md-8 col-lg-6 col-xxl-3">
             <div class="card mb-0">
               <div class="card-body">
-                <img src="../assets/images/logos/rmu.jpg" width="120" height="120" alt="">
+                <img src="../assets/images/logos/rmu.jpg" width="120" height="120" alt="" style="max-width:100%;height:auto;">
                 <h2>RMU PROJECT FINDER</h2>
                 <p class="text-center">Reset Department Password</p>
 

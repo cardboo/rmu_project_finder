@@ -40,8 +40,8 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
   <style>
   /* Page-specific column styles */
   table.table tbody td:first-child { font-weight: 600; color: var(--uni-navy); text-align: center; white-space: nowrap; }
-  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); min-width: 220px; }
-  table.table tbody td:nth-child(3) { color: var(--uni-text-muted); max-width: 360px; }
+  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); }
+  table.table tbody td:nth-child(3) { color: var(--uni-text-muted); }
   table.table tbody td:nth-child(4) { font-weight: 600; text-align: center; white-space: nowrap; }
   table.table tbody td:nth-child(5),
   table.table tbody td:nth-child(6),
@@ -51,7 +51,9 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
   @media (max-width: 768px) {
     .content-container select.form-select { max-width: 100%; margin-left: 0; }
   }
-  .modal-dialog { margin-top: 5vh; }
+  @media (min-width: 769px) {
+    .modal-dialog { margin-top: 5vh; }
+  }
   textarea.form-control { resize: vertical; }
   input[type="file"] { font-size: 13px; }
 </style>
@@ -270,7 +272,7 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
 
         <h6 class="fw-bold">Project Abstract (Preview)</h6>
 
-        <div id="pdfPreview" class="border rounded mt-2" style="height: 450px; display:none;">
+        <div id="pdfPreview" class="border rounded mt-2 pdf-preview-container" style="display:none;">
           <iframe
             id="pdfFrame"
             src=""

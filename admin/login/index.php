@@ -21,7 +21,7 @@
             <div class="card mb-0">
               <div class="card-body">
                 
-                  <img src="../assets/images/logos/rmu.jpg" width="120" height="120" alt="">
+                  <img src="../assets/images/logos/rmu.jpg" width="120" height="120" alt="" style="max-width:100%;height:auto;">
                 <h2>RMU PROJECT FINDER</h2>
                 <p class="text-center">Admin Login</p>
 

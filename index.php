@@ -393,6 +393,7 @@
     width: 100%;
     max-width: 700px;
     max-height: 80vh;
+    margin: 0 12px;
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);

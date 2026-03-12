@@ -325,12 +325,28 @@ table.table tbody td {
   .filters-bar .form-control { width: 100%; }
 }
 
-@media (max-width: 991px) {
+@media (max-width: 1199.98px) {
   .left-sidebar {
     position: fixed;
+    left: -270px;
     z-index: 1050;
+    transition: left 0.3s ease;
+  }
+  #main-wrapper.show-sidebar .left-sidebar {
+    left: 0;
   }
   .body-wrapper {
     margin-left: 0 !important;
   }
+}
+
+/* === MOBILE HAMBURGER === */
+.app-header .sidebartoggler {
+  font-size: 24px;
+  color: var(--uni-navy);
+  padding: 8px;
+}
+
+.app-header .sidebartoggler:hover {
+  color: var(--uni-accent);
 }

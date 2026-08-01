@@ -38,24 +38,12 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
   <link rel="stylesheet" href="../assets/css/custom-theme.css" />
 
   <style>
-  /* Page-specific column styles */
-  table.table tbody td:first-child { font-weight: 600; color: var(--uni-navy); text-align: center; white-space: nowrap; }
-  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); }
+  table.table tbody td:nth-child(2) { font-weight: 600; color: var(--uni-navy); }
   table.table tbody td:nth-child(3) { color: var(--uni-text-muted); }
   table.table tbody td:nth-child(4) { font-weight: 600; text-align: center; white-space: nowrap; }
   table.table tbody td:nth-child(5),
   table.table tbody td:nth-child(6),
-  table.table tbody td:nth-child(7) { font-size: 13px; color: #425a66; }
-  table.table tbody td:last-child { text-align: center; white-space: nowrap; }
-  .content-container select.form-select { max-width: 260px; margin-left: auto; margin-bottom: 16px; border: 2px solid var(--uni-navy); font-weight: 600; border-radius: 6px; }
-  @media (max-width: 768px) {
-    .content-container select.form-select { max-width: 100%; margin-left: 0; }
-  }
-  @media (min-width: 769px) {
-    .modal-dialog { margin-top: 5vh; }
-  }
-  textarea.form-control { resize: vertical; }
-  input[type="file"] { font-size: 13px; }
+  table.table tbody td:nth-child(7) { font-size: 13px; color: var(--uni-text-muted); }
 </style>
 
 </head>
@@ -136,6 +124,7 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
       <!-- End Sidebar scroll-->
     </aside>
     <!--  Sidebar End -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <!--  Main wrapper -->
     <div class="body-wrapper">
       <!--  Header Start -->
@@ -221,13 +210,13 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
 
     <!-- Projects Table -->
     <table class="table table-bordered">
-        <thead class="table-dark">
+        <thead class="">
             <tr>
                 <th>#</th>
-                <th style="cursor:pointer" onclick="sortByColumn('title_asc','title_desc')">Project Title <span class="sort-icon">&#8693;</span></th>
+                <th class="sortable-th" onclick="sortByColumn('title_asc','title_desc')">Project Title <span class="sort-icon">&#8693;</span></th>
                 <th>Description</th>
-                <th style="cursor:pointer" onclick="sortByColumn('year_asc','year_desc')">Year <span class="sort-icon">&#8693;</span></th>
-                <th style="cursor:pointer" onclick="sortByColumn('dep_asc','dep_desc')">Department <span class="sort-icon">&#8693;</span></th>
+                <th class="sortable-th" onclick="sortByColumn('year_asc','year_desc')">Year <span class="sort-icon">&#8693;</span></th>
+                <th class="sortable-th" onclick="sortByColumn('dep_asc','dep_desc')">Department <span class="sort-icon">&#8693;</span></th>
                 <th>Participant(s)</th>
                 <th>Project Supervisor(s)</th>
                 <th>Project Tags</th>
@@ -305,6 +294,14 @@ $allTags = $tagResult->fetch_all(MYSQLI_ASSOC);
 <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/sidebarmenu.js"></script>
 <script src="../assets/js/app.min.js"></script>
+<script>
+(function() {
+  var w = document.getElementById('main-wrapper'), o = document.getElementById('sidebarOverlay');
+  if (!w || !o) return;
+  new MutationObserver(function() { o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
+  o.addEventListener('click', function() { w.classList.remove('show-sidebar'); o.classList.remove('active'); });
+})();
+</script>
 
 <script>
 const viewModal = document.getElementById('viewDetailsModal');

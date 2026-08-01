@@ -40,17 +40,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
   <link rel="stylesheet" href="../assets/css/custom-theme.css" />
 
   <style>
-  /* Page-specific column styles */
-  table.table tbody td:first-child { font-weight: 600; color: var(--uni-navy); text-align: center; white-space: nowrap; }
-  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); }
-  table.table tbody td:last-child { text-align: center; white-space: nowrap; }
-  .edit-btn { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-radius: 6px; transition: transform 0.15s, box-shadow 0.15s; }
-  .edit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); }
-  table.table tbody tr td.text-center { font-style: italic; color: var(--uni-text-muted); padding: 24px; background-color: #fafafa; }
-  @media (min-width: 769px) {
-    .modal-dialog { margin-top: 5vh; }
-  }
-  input[type="file"] { font-size: 13px; }
+  table.table tbody td:nth-child(2) { font-weight: 600; color: var(--uni-navy); }
 </style>
 
 </head>
@@ -127,6 +117,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
       <!-- End Sidebar scroll-->
     </aside>
     <!--  Sidebar End -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <!--  Main wrapper -->
     <div class="body-wrapper">
       <!--  Header Start -->
@@ -155,7 +146,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 <!-- Supervisors Table -->
 <div class="table-responsive">
     <table class="table table-striped table-bordered align-middle">
-        <thead class="table-dark">
+        <thead class="">
             <tr>
                 <th>#</th>
                 <th>Supervisor Name</th>
@@ -304,6 +295,14 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/sidebarmenu.js"></script>
 <script src="../assets/js/app.min.js"></script>
+<script>
+(function() {
+  var w = document.getElementById('main-wrapper'), o = document.getElementById('sidebarOverlay');
+  if (!w || !o) return;
+  new MutationObserver(function() { o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
+  o.addEventListener('click', function() { w.classList.remove('show-sidebar'); o.classList.remove('active'); });
+})();
+</script>
 
 <script>
 document.querySelectorAll('.edit-btn').forEach(button => {

@@ -128,6 +128,7 @@ $auditLogs = $auditQuery->get_result()->fetch_all(MYSQLI_ASSOC);
       <!-- End Sidebar scroll-->
     </aside>
     <!--  Sidebar End -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <!--  Main wrapper -->
     <div class="body-wrapper">
       <!--  Header Start -->
@@ -153,7 +154,7 @@ $auditLogs = $auditQuery->get_result()->fetch_all(MYSQLI_ASSOC);
       <div class="card stat-card light">
         <div class="card-body">
           <div class="stat-label">Department</div>
-          <div class="stat-value" style="font-size:1.4rem"><?= htmlspecialchars($dep_name); ?></div>
+          <div class="stat-value"><?= htmlspecialchars($dep_name); ?></div>
           <span class="stat-bar"></span>
         </div>
       </div>
@@ -176,7 +177,7 @@ $auditLogs = $auditQuery->get_result()->fetch_all(MYSQLI_ASSOC);
     <div class="col-12 col-lg-8">
       <div class="card">
         <div class="card-body">
-          <h5 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Projects by Year</h5>
+          <h5 class="section-heading">Projects by Year</h5>
           <div id="yearChart"></div>
         </div>
       </div>
@@ -185,10 +186,10 @@ $auditLogs = $auditQuery->get_result()->fetch_all(MYSQLI_ASSOC);
 
   <!-- Activity Log Section -->
   <div class="mt-5">
-    <h4 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Your Recent Activity</h4>
+    <h4 class="section-heading">Your Recent Activity</h4>
     <div class="table-responsive">
       <table class="table table-bordered">
-        <thead class="table-dark">
+        <thead class="">
           <tr>
             <th>Time</th>
             <th>Action</th>
@@ -201,8 +202,8 @@ $auditLogs = $auditQuery->get_result()->fetch_all(MYSQLI_ASSOC);
           <?php else: ?>
             <?php foreach ($auditLogs as $log): ?>
               <tr>
-                <td style="white-space:nowrap; font-size:13px;"><?= htmlspecialchars(date('M j, Y g:ia', strtotime($log['created_at']))) ?></td>
-                <td><span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; background:var(--uni-navy-soft); color:var(--uni-navy);"><?= htmlspecialchars(str_replace('_', ' ', $log['action'])) ?></span></td>
+                <td class="audit-time"><?= htmlspecialchars(date('M j, Y g:ia', strtotime($log['created_at']))) ?></td>
+                <td><span class="audit-badge"><?= htmlspecialchars(str_replace('_', ' ', $log['action'])) ?></span></td>
                 <td class="audit-details"><?= htmlspecialchars($log['details']) ?></td>
               </tr>
             <?php endforeach; ?>
@@ -217,6 +218,14 @@ $auditLogs = $auditQuery->get_result()->fetch_all(MYSQLI_ASSOC);
   <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/sidebarmenu.js"></script>
   <script src="../assets/js/app.min.js"></script>
+  <script>
+  (function() {
+    var w = document.getElementById('main-wrapper'), o = document.getElementById('sidebarOverlay');
+    if (!w || !o) return;
+    new MutationObserver(function() { o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
+    o.addEventListener('click', function() { w.classList.remove('show-sidebar'); o.classList.remove('active'); });
+  })();
+  </script>
   <script src="../assets/libs/apexcharts/dist/apexcharts.min.js"></script>
   <script src="../assets/libs/simplebar/dist/simplebar.js"></script>
   <script>
@@ -225,7 +234,7 @@ $auditLogs = $auditQuery->get_result()->fetch_all(MYSQLI_ASSOC);
     chart: { type: 'bar', height: 300, toolbar: { show: false } },
     series: [{ name: 'Projects', data: <?= json_encode(array_map('intval', array_column($yearChartData, 'project_count'))) ?> }],
     xaxis: { categories: <?= json_encode(array_column($yearChartData, 'year')) ?> },
-    colors: ['#002147'],
+    colors: ['#1e3a5c'],
     plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
     dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 700 } },
     tooltip: { y: { formatter: function(val) { return val + ' project' + (val !== 1 ? 's' : ''); } } }

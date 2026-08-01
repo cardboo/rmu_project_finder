@@ -9,16 +9,16 @@
   *, *::before, *::after { box-sizing: border-box; }
 
   :root {
-    --navy: #002147;
-    --navy-light: #003366;
-    --accent: #0077b6;
-    --accent-soft: rgba(0, 119, 182, 0.08);
-    --accent-border: rgba(0, 119, 182, 0.2);
-    --bg: #f5f7fa;
+    --navy: #1e3a5c;
+    --navy-light: #2d5480;
+    --accent: #4a8db8;
+    --accent-soft: rgba(74, 141, 184, 0.06);
+    --accent-border: rgba(74, 141, 184, 0.15);
+    --bg: #f7f8fb;
     --card-bg: #ffffff;
-    --text: #1a2a3a;
-    --text-muted: #5a6a7a;
-    --border: #e2e8f0;
+    --text: #2d3b4e;
+    --text-muted: #6b7d8e;
+    --border: #e2e7ee;
   }
 
   body {
@@ -31,9 +31,9 @@
 
   /* === HERO HEADER === */
   .hero {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 50%, var(--accent) 100%);
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 60%, var(--accent) 100%);
     color: #fff;
-    padding: 48px 20px 40px;
+    padding: 44px 20px 38px;
     text-align: center;
   }
 
@@ -52,8 +52,8 @@
 
   .hero h1 {
     margin: 0 0 6px;
-    font-size: 2rem;
-    font-weight: 800;
+    font-size: 1.8rem;
+    font-weight: 700;
     letter-spacing: -0.01em;
   }
 
@@ -77,7 +77,8 @@
   .search-box {
     background: var(--card-bg);
     border-radius: 14px;
-    box-shadow: 0 8px 30px rgba(0, 33, 71, 0.12);
+    box-shadow: 0 4px 20px rgba(30, 58, 92, 0.08);
+    border: 1px solid var(--border);
     padding: 24px 28px;
   }
 
@@ -109,7 +110,7 @@
     border: none;
     border-radius: 10px;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
     white-space: nowrap;
@@ -146,12 +147,12 @@
   .filters .clear-btn {
     padding: 9px 16px;
     background: none;
-    border: 1.5px solid var(--border);
+    border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 13px;
     color: var(--text-muted);
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 500;
     transition: all 0.2s;
   }
 
@@ -173,7 +174,7 @@
   .stats-bar .count {
     font-size: 14px;
     color: var(--text-muted);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   /* === TAG CLOUD === */
@@ -192,11 +193,11 @@
 
   .tag-cloud-header h3 {
     margin: 0;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-muted);
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
   }
 
   .tag-cloud {
@@ -211,10 +212,10 @@
     gap: 4px;
     padding: 6px 14px;
     background: var(--card-bg);
-    border: 1.5px solid var(--border);
+    border: 1px solid var(--border);
     border-radius: 20px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--navy);
     cursor: pointer;
     transition: all 0.2s;
@@ -248,9 +249,9 @@
   /* === PROJECT CARD === */
   .project-card {
     background: var(--card-bg);
-    border-radius: 14px;
-    border: none;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(30, 58, 92, 0.04);
     padding: 0;
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
@@ -260,13 +261,13 @@
   }
 
   .project-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0, 33, 71, 0.14);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(30, 58, 92, 0.10);
   }
 
   /* Card top accent bar */
   .project-card .card-accent {
-    height: 5px;
+    height: 3px;
     background: linear-gradient(90deg, var(--navy) 0%, var(--accent) 100%);
   }
 
@@ -301,8 +302,8 @@
 
   .project-card h3 {
     margin: 0;
-    font-size: 1.05rem;
-    font-weight: 800;
+    font-size: 1rem;
+    font-weight: 700;
     color: var(--navy);
     line-height: 1.35;
     flex: 1;
@@ -332,10 +333,10 @@
 
   .project-card .meta strong {
     color: var(--navy);
-    font-weight: 700;
+    font-weight: 600;
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     min-width: 90px;
     flex-shrink: 0;
   }
@@ -404,7 +405,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 24px;
+    padding: 14px 24px;
     background: var(--navy);
     color: #fff;
   }
@@ -412,7 +413,7 @@
   .desc-modal-header h3 {
     margin: 0;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 600;
     flex: 1;
     margin-right: 16px;
     white-space: nowrap;
@@ -462,11 +463,10 @@
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     border: 1px solid var(--accent-border);
     transition: all 0.2s;
-    letter-spacing: 0.02em;
   }
 
   .project-card .card-tag:hover {
@@ -488,9 +488,9 @@
   .project-card .dept-label {
     font-size: 11px;
     color: var(--accent);
-    font-weight: 800;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -513,12 +513,11 @@
     padding: 7px 16px;
     background: var(--navy);
     color: #fff;
-    border-radius: 6px;
+    border-radius: 8px;
     text-decoration: none;
     font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.03em;
     transition: background 0.2s, transform 0.15s;
   }
 
@@ -535,12 +534,11 @@
     background: var(--accent);
     color: #fff;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     text-decoration: none;
     font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.03em;
     cursor: pointer;
     transition: background 0.2s, transform 0.15s;
   }
@@ -582,7 +580,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 24px;
+    padding: 14px 24px;
     background: var(--navy);
     color: #fff;
   }
@@ -590,7 +588,7 @@
   .preview-modal-header h3 {
     margin: 0;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -610,13 +608,11 @@
     background: #fff;
     color: var(--navy);
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
     transition: background 0.2s;
   }
 
@@ -676,14 +672,14 @@
   }
 
   .pagination-bar button {
-    min-width: 40px;
-    height: 40px;
-    border: 1.5px solid var(--border);
+    min-width: 38px;
+    height: 38px;
+    border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--card-bg);
     color: var(--text);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;

@@ -120,23 +120,12 @@ while ($row = $projectResult->fetch_assoc()) {
   <link rel="stylesheet" href="../assets/css/custom-theme.css" />
 
   <style>
-  /* Page-specific column styles */
-  table.table tbody td:first-child { font-weight: 600; color: var(--uni-navy); text-align: center; white-space: nowrap; }
-  table.table tbody td:nth-child(2) { font-weight: 700; color: var(--uni-navy); }
+  table.table tbody td:nth-child(2) { font-weight: 600; color: var(--uni-navy); }
   table.table tbody td:nth-child(3) { color: var(--uni-text-muted); }
   table.table tbody td:nth-child(4) { font-weight: 600; text-align: center; white-space: nowrap; }
   table.table tbody td:nth-child(5),
   table.table tbody td:nth-child(6),
-  table.table tbody td:nth-child(7) { font-size: 13px; color: #425a66; }
-  table.table tbody td:last-child { text-align: center; white-space: nowrap; }
-  .edit-btn { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-radius: 6px; transition: transform 0.15s, box-shadow 0.15s; }
-  .edit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); }
-  table.table tbody tr td.text-center { font-style: italic; color: var(--uni-text-muted); padding: 24px; background-color: #fafafa; }
-  @media (min-width: 769px) {
-    .modal-dialog { margin-top: 5vh; }
-  }
-  textarea.form-control { resize: vertical; }
-  input[type="file"] { font-size: 13px; }
+  table.table tbody td:nth-child(7) { font-size: 13px; color: var(--uni-text-muted); }
 </style>
 
 </head>
@@ -213,6 +202,7 @@ while ($row = $projectResult->fetch_assoc()) {
       <!-- End Sidebar scroll-->
     </aside>
     <!--  Sidebar End -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <!--  Main wrapper -->
     <div class="body-wrapper">
       <!--  Header Start -->
@@ -243,7 +233,7 @@ while ($row = $projectResult->fetch_assoc()) {
 <!-- Projects Table -->
 <div class="table-responsive">
     <table class="table table-striped table-bordered align-middle">
-        <thead class="table-dark">
+        <thead class="">
             <tr>
                 <th>#</th>
                 <th>Project Title</th>
@@ -283,12 +273,12 @@ while ($row = $projectResult->fetch_assoc()) {
                         $supervisorDisplay = implode(', ', array_map(fn($s) => htmlspecialchars($s['full_name']), $proj['supervisors']));
                         $isArchived = $proj['is_archived'];
                     ?>
-                    <tr<?= $isArchived ? ' style="opacity:0.6;"' : '' ?>>
+                    <tr<?= $isArchived ? ' class="archived-row"' : '' ?>>
                         <td><?= $counter++ ?></td>
                         <td>
                             <?= htmlspecialchars($proj['project_title']) ?>
                             <?php if ($isArchived): ?>
-                                <span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; background:#dc3545; color:#fff; margin-left:6px; vertical-align:middle;">ARCHIVED</span>
+                                <span class="archived-badge">ARCHIVED</span>
                             <?php endif; ?>
                         </td>
                         <td><?= htmlspecialchars($proj['description']) ?></td>
@@ -296,7 +286,7 @@ while ($row = $projectResult->fetch_assoc()) {
                         <td><?= $membersDisplay ?></td>
                         <td><?= $supervisorDisplay ?: 'No supervisor assigned' ?></td>
                         <td><?= $tagsDisplay ?></td>
-                        <td style="white-space:nowrap;">
+                        <td class="action-cell">
                             <?php if (!$isArchived): ?>
                                 <button class="btn btn-sm btn-warning edit-btn"
                                     data-id="<?= $proj['id'] ?>"
@@ -312,13 +302,13 @@ while ($row = $projectResult->fetch_assoc()) {
                                     data-bs-target="#editProjectModal">
                                     Edit
                                 </button>
-                                <form action="archive_project.php" method="POST" style="display:inline;">
+                                <form action="archive_project.php" method="POST" class="inline-form">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= $proj['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to archive this project?');">Archive</button>
                                 </form>
                             <?php else: ?>
-                                <form action="unarchive_project.php" method="POST" style="display:inline;">
+                                <form action="unarchive_project.php" method="POST" class="inline-form">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= $proj['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Restore this project?');">Unarchive</button>
@@ -370,7 +360,7 @@ while ($row = $projectResult->fetch_assoc()) {
     </nav>
     <?php endif; ?>
 
-    <p class="text-center text-muted mt-2 mb-0" style="font-size:13px;">
+    <p class="pagination-summary">
       Showing <?= $startNum + 1 ?>–<?= min($startNum + $perPage, $totalProj) ?> of <?= $totalProj ?> project<?= $totalProj !== 1 ? 's' : '' ?>
     </p>
 </div>
@@ -559,6 +549,14 @@ while ($row = $projectResult->fetch_assoc()) {
 <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/sidebarmenu.js"></script>
 <script src="../assets/js/app.min.js"></script>
+<script>
+(function() {
+  var w = document.getElementById('main-wrapper'), o = document.getElementById('sidebarOverlay');
+  if (!w || !o) return;
+  new MutationObserver(function() { o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
+  o.addEventListener('click', function() { w.classList.remove('show-sidebar'); o.classList.remove('active'); });
+})();
+</script>
 
 <script>
   function addMemberRow() {

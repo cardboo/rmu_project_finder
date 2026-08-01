@@ -94,6 +94,7 @@ $error = $_GET['error'] ?? '';
       <!-- End Sidebar scroll-->
     </aside>
     <!--  Sidebar End -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <!--  Main wrapper -->
     <div class="body-wrapper">
       <!--  Header Start -->
@@ -157,6 +158,14 @@ $error = $_GET['error'] ?? '';
   <script src="../assets/js/sidebarmenu.js"></script>
   <script src="../assets/js/app.min.js"></script>
   <script src="../assets/libs/simplebar/dist/simplebar.js"></script>
+  <script>
+  (function() {
+    var w = document.getElementById('main-wrapper'), o = document.getElementById('sidebarOverlay');
+    if (!w || !o) return;
+    new MutationObserver(function() { o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
+    o.addEventListener('click', function() { w.classList.remove('show-sidebar'); o.classList.remove('active'); });
+  })();
+  </script>
   <script>
     document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
       const newPw = document.getElementById('new_password').value;

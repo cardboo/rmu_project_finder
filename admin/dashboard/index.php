@@ -23,6 +23,28 @@ $deptQuery = $conn->prepare("SELECT COUNT(*) AS total FROM departments");
 $deptQuery->execute();
 $totalDepartments = $deptQuery->get_result()->fetch_assoc()['total'];
 
+// Projects by department (for chart)
+$deptChartQuery = $conn->prepare("
+  SELECT d.dep_name, COUNT(p.id) AS project_count
+  FROM departments d
+  LEFT JOIN projects p ON d.dep_id = p.dep_id AND (p.is_archived = 0 OR p.is_archived IS NULL)
+  GROUP BY d.dep_id, d.dep_name
+  ORDER BY project_count DESC
+");
+$deptChartQuery->execute();
+$deptChartData = $deptChartQuery->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Projects by year (for chart)
+$yearChartQuery = $conn->prepare("
+  SELECT year, COUNT(*) AS project_count
+  FROM projects
+  WHERE is_archived = 0 OR is_archived IS NULL
+  GROUP BY year
+  ORDER BY year ASC
+");
+$yearChartQuery->execute();
+$yearChartData = $yearChartQuery->get_result()->fetch_all(MYSQLI_ASSOC);
+
 // Recent audit logs (last 20)
 $auditQuery = $conn->prepare("SELECT username, action, details, ip_address, created_at FROM audit_log ORDER BY created_at DESC LIMIT 20");
 $auditQuery->execute();
@@ -107,7 +129,7 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
             </li>
 
             <li class="sidebar-item">
-              <a class="sidebar-link" href="../logout" aria-expanded="false">
+              <a class="sidebar-link" href="../logout" aria-expanded="false" onclick="return confirm('Are you sure you want to logout?')">
                 <span>
                   <i class="ti ti-typography"></i>
                 </span>
@@ -164,6 +186,26 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
 
   </div>
 
+  <!-- Charts Section -->
+  <div class="row g-4 mt-2">
+    <div class="col-12 col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Projects by Department</h5>
+          <div id="deptChart"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Projects by Year</h5>
+          <div id="yearChart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Audit Log Section -->
   <div class="mt-5">
     <h4 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Recent Activity Log</h4>
@@ -205,7 +247,38 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
   <script src="../assets/js/app.min.js"></script>
   <script src="../assets/libs/apexcharts/dist/apexcharts.min.js"></script>
   <script src="../assets/libs/simplebar/dist/simplebar.js"></script>
-  <script src="../assets/js/dashboard.js"></script>
+  <script>
+  // Projects by Department - Bar Chart
+  var deptOptions = {
+    chart: { type: 'bar', height: 320, toolbar: { show: false } },
+    series: [{ name: 'Projects', data: <?= json_encode(array_column($deptChartData, 'project_count')) ?> }],
+    xaxis: {
+      categories: <?= json_encode(array_map(function($d) { return strlen($d['dep_name']) > 20 ? substr($d['dep_name'], 0, 18) . '...' : $d['dep_name']; }, $deptChartData)) ?>,
+      labels: { style: { fontSize: '11px' }, rotate: -45, rotateAlways: <?= count($deptChartData) > 4 ? 'true' : 'false' ?> }
+    },
+    colors: ['#002147'],
+    plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
+    dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 700 } },
+    tooltip: {
+      y: { formatter: function(val) { return val + ' project' + (val !== 1 ? 's' : ''); } },
+      x: { formatter: function(val, opts) { var names = <?= json_encode(array_column($deptChartData, 'dep_name')) ?>; return names[opts.dataPointIndex] || val; } }
+    }
+  };
+  new ApexCharts(document.querySelector("#deptChart"), deptOptions).render();
+
+  // Projects by Year - Line Chart
+  var yearOptions = {
+    chart: { type: 'line', height: 320, toolbar: { show: false } },
+    series: [{ name: 'Projects', data: <?= json_encode(array_map('intval', array_column($yearChartData, 'project_count'))) ?> }],
+    xaxis: { categories: <?= json_encode(array_column($yearChartData, 'year')) ?> },
+    colors: ['#0077b6'],
+    stroke: { width: 3, curve: 'smooth' },
+    markers: { size: 5, colors: ['#002147'], strokeWidth: 2, strokeColors: '#fff' },
+    dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 700 } },
+    tooltip: { y: { formatter: function(val) { return val + ' project' + (val !== 1 ? 's' : ''); } } }
+  };
+  new ApexCharts(document.querySelector("#yearChart"), yearOptions).render();
+  </script>
 </body>
 
 

@@ -12,7 +12,7 @@ if (!$conn) {
   die("Connection failed: " . mysqli_connect_error());
 }
 
-$dep_id = $_SESSION['dep_id']; // To get only your department's projects
+$dep_id = $_SESSION['dep_id'];
 
 // Total projects (exclude archived)
 $totalQuery = $conn->prepare("SELECT COUNT(*) AS total FROM projects WHERE dep_id = ? AND (is_archived = 0 OR is_archived IS NULL)");
@@ -21,7 +21,23 @@ $totalQuery->execute();
 $totalResult = $totalQuery->get_result()->fetch_assoc();
 $totalProjects = $totalResult['total'];
 
+// Projects by year for this department (for chart)
+$yearChartQuery = $conn->prepare("
+  SELECT year, COUNT(*) AS project_count
+  FROM projects
+  WHERE dep_id = ? AND (is_archived = 0 OR is_archived IS NULL)
+  GROUP BY year
+  ORDER BY year ASC
+");
+$yearChartQuery->bind_param("s", $dep_id);
+$yearChartQuery->execute();
+$yearChartData = $yearChartQuery->get_result()->fetch_all(MYSQLI_ASSOC);
 
+// Recent activity for this department admin
+$auditQuery = $conn->prepare("SELECT username, action, details, ip_address, created_at FROM audit_log WHERE username = ? ORDER BY created_at DESC LIMIT 15");
+$auditQuery->bind_param("s", $username);
+$auditQuery->execute();
+$auditLogs = $auditQuery->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
 
 
@@ -98,7 +114,7 @@ $totalProjects = $totalResult['total'];
             </li>
 
             <li class="sidebar-item">
-              <a class="sidebar-link" href="../logout" aria-expanded="false">
+              <a class="sidebar-link" href="../logout" aria-expanded="false" onclick="return confirm('Are you sure you want to logout?')">
                 <span>
                   <i class="ti ti-typography"></i>
                 </span>
@@ -154,18 +170,71 @@ $totalProjects = $totalResult['total'];
     </div>
 
   </div>
+
+  <!-- Chart Section -->
+  <div class="row g-4 mt-2">
+    <div class="col-12 col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <h5 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Projects by Year</h5>
+          <div id="yearChart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Log Section -->
+  <div class="mt-5">
+    <h4 style="font-weight:800; color:var(--uni-navy); margin-bottom:16px;">Your Recent Activity</h4>
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Time</th>
+            <th>Action</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($auditLogs)): ?>
+            <tr><td colspan="3" class="text-center text-muted fst-italic">No activity recorded yet.</td></tr>
+          <?php else: ?>
+            <?php foreach ($auditLogs as $log): ?>
+              <tr>
+                <td style="white-space:nowrap; font-size:13px;"><?= htmlspecialchars(date('M j, Y g:ia', strtotime($log['created_at']))) ?></td>
+                <td><span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; background:var(--uni-navy-soft); color:var(--uni-navy);"><?= htmlspecialchars(str_replace('_', ' ', $log['action'])) ?></span></td>
+                <td class="audit-details"><?= htmlspecialchars($log['details']) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-    
-
-     
   <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
   <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/sidebarmenu.js"></script>
   <script src="../assets/js/app.min.js"></script>
   <script src="../assets/libs/apexcharts/dist/apexcharts.min.js"></script>
   <script src="../assets/libs/simplebar/dist/simplebar.js"></script>
-  <script src="../assets/js/dashboard.js"></script>
+  <script>
+  <?php if (!empty($yearChartData)): ?>
+  var yearOptions = {
+    chart: { type: 'bar', height: 300, toolbar: { show: false } },
+    series: [{ name: 'Projects', data: <?= json_encode(array_map('intval', array_column($yearChartData, 'project_count'))) ?> }],
+    xaxis: { categories: <?= json_encode(array_column($yearChartData, 'year')) ?> },
+    colors: ['#002147'],
+    plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
+    dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 700 } },
+    tooltip: { y: { formatter: function(val) { return val + ' project' + (val !== 1 ? 's' : ''); } } }
+  };
+  new ApexCharts(document.querySelector("#yearChart"), yearOptions).render();
+  <?php else: ?>
+  document.querySelector("#yearChart").innerHTML = '<p class="text-muted text-center py-4">No project data to display yet.</p>';
+  <?php endif; ?>
+  </script>
 </body>
 
 

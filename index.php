@@ -811,11 +811,7 @@
 <!-- RESULTS -->
 <div class="results-section">
   <div class="results-grid" id="results">
-    <div class="empty-state">
-      <div class="icon">&#128218;</div>
-      <h3>Start Searching</h3>
-      <p>Enter a keyword above or click a tag to browse projects</p>
-    </div>
+    <div class="loading">Loading recent projects...</div>
   </div>
   <div class="pagination-bar" id="paginationBar"></div>
 </div>
@@ -889,14 +885,8 @@ async function performSearch(page) {
   params.set('page', currentPage);
 
   if (!query && !department && !year && !activeTag) {
-    document.getElementById('results').innerHTML = `
-      <div class="empty-state">
-        <div class="icon">&#128218;</div>
-        <h3>Start Searching</h3>
-        <p>Enter a keyword above or click a tag to browse projects</p>
-      </div>`;
-    document.getElementById('resultCount').textContent = '';
     document.getElementById('paginationBar').innerHTML = '';
+    loadRecentProjects();
     return;
   }
 
@@ -1036,14 +1026,8 @@ function clearFilters() {
   activeTag = '';
   currentPage = 1;
   document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
-  document.getElementById('results').innerHTML = `
-    <div class="empty-state">
-      <div class="icon">&#128218;</div>
-      <h3>Start Searching</h3>
-      <p>Enter a keyword above or click a tag to browse projects</p>
-    </div>`;
-  document.getElementById('resultCount').textContent = '';
   document.getElementById('paginationBar').innerHTML = '';
+  loadRecentProjects();
 }
 
 // === EVENT LISTENERS ===
@@ -1064,6 +1048,21 @@ document.getElementById('yearFilter').addEventListener('change', () => performSe
 
 // Init
 loadFilters();
+loadRecentProjects();
+
+async function loadRecentProjects() {
+  try {
+    const res = await fetch('recent_projects.php');
+    const data = await res.json();
+    if (data.projects && data.projects.length > 0) {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = data.projects.map(project => renderCard(project)).join('');
+      document.getElementById('resultCount').textContent = 'Showing recent projects';
+    }
+  } catch (e) {
+    console.error('Failed to load recent projects:', e);
+  }
+}
 </script>
 
 <!-- PREVIEW MODAL -->

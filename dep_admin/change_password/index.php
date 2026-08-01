@@ -80,7 +80,7 @@ $error = $_GET['error'] ?? '';
               </a>
             </li>
             <li class="sidebar-item">
-              <a class="sidebar-link" href="../logout" aria-expanded="false">
+              <a class="sidebar-link" href="../logout" aria-expanded="false" onclick="return confirm('Are you sure you want to logout?')">
                 <span>
                   <i class="ti ti-typography"></i>
                 </span>

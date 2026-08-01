@@ -199,7 +199,7 @@ while ($row = $projectResult->fetch_assoc()) {
             </li>
 
             <li class="sidebar-item">
-              <a class="sidebar-link" href="../logout" aria-expanded="false">
+              <a class="sidebar-link" href="../logout" aria-expanded="false" onclick="return confirm('Are you sure you want to logout?')">
                 <span>
                   <i class="ti ti-typography"></i>
                 </span>
@@ -235,6 +235,7 @@ while ($row = $projectResult->fetch_assoc()) {
       <a href="?show_archived=<?= $showArchived ? '0' : '1' ?>" class="btn <?= $showArchived ? 'btn-outline-secondary' : 'btn-outline-primary' ?> btn-sm">
         <?= $showArchived ? 'Hide Archived' : 'Show Archived' ?>
       </a>
+      <button class="btn btn-info text-white" onclick="exportCSV()">Export CSV</button>
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">Add a New Project</button>
     </div>
   </div>
@@ -907,6 +908,37 @@ addProjectModal.addEventListener('hidden.bs.modal', () => {
     });
   }
 })();
+</script>
+
+<script>
+function exportCSV() {
+  const table = document.querySelector('table.table');
+  if (!table) return;
+  const rows = table.querySelectorAll('tr');
+  let csv = [];
+  rows.forEach((row, i) => {
+    const cells = row.querySelectorAll('th, td');
+    if (cells.length < 2) return;
+    const lastIdx = cells.length - 1;
+    const rowData = [];
+    cells.forEach((cell, j) => {
+      if (j === lastIdx && i > 0) return;
+      if (j === lastIdx && i === 0) { rowData.push('"Status"'); return; }
+      let text = cell.textContent.trim().replace(/\s+/g, ' ');
+      rowData.push('"' + text.replace(/"/g, '""') + '"');
+    });
+    if (i > 0) {
+      const archived = row.style.opacity === '0.6' ? 'Archived' : 'Active';
+      rowData.push('"' + archived + '"');
+    }
+    csv.push(rowData.join(','));
+  });
+  const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = '<?= preg_replace("/[^a-zA-Z0-9]/", "_", $dep_name) ?>_projects.csv';
+  link.click();
+}
 </script>
 
 </body>

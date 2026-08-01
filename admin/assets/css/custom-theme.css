@@ -8,6 +8,7 @@
   --uni-navy: #1e3a5c;
   --uni-navy-dark: #162d47;
   --uni-navy-light: #2d5480;
+  --uni-navy-mid: #2d4a6a;
   --uni-accent: #4a8db8;
   --uni-accent-soft: rgba(74, 141, 184, 0.08);
 
@@ -216,15 +217,16 @@ body {
   opacity: 0.6;
 }
 
-/* Stat card variants with left accent border */
+/* Primary stat card - filled navy */
 .stat-card.navy {
-  border-left: 4px solid var(--uni-navy);
-  background: var(--uni-white);
-  color: var(--uni-text);
+  border: none;
+  background: var(--uni-navy-mid);
+  color: #ffffff;
 }
 
-.stat-card.navy .stat-value { color: var(--uni-navy); }
-.stat-card.navy .stat-bar { background: var(--uni-navy); }
+.stat-card.navy .stat-label { color: rgba(255, 255, 255, 0.7); }
+.stat-card.navy .stat-value { color: #ffffff; }
+.stat-card.navy .stat-bar { background: rgba(255, 255, 255, 0.4); }
 
 .stat-card.accent {
   border-left: 4px solid var(--uni-accent);
@@ -276,15 +278,15 @@ table.table {
 }
 
 table.table thead th {
-  background: var(--uni-surface) !important;
-  color: var(--uni-navy);
+  background: var(--uni-navy-mid) !important;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 12px 14px;
   border: none;
-  border-bottom: 2px solid var(--uni-border);
+  border-bottom: none;
   vertical-align: middle;
 }
 
@@ -332,9 +334,11 @@ table.table tbody tr td.text-center {
 /* ========== ACTION BUTTONS (table) ========== */
 
 .edit-btn {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 5px 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 14px;
   border-radius: 6px;
   transition: transform 0.15s, box-shadow 0.15s;
 }
@@ -412,24 +416,25 @@ table.table tbody tr td.text-center {
 }
 
 .modal-header {
-  background: var(--uni-white);
-  color: var(--uni-navy);
+  background: var(--uni-navy-mid);
+  color: #ffffff;
   padding: 16px 24px;
-  border-bottom: 1px solid var(--uni-border);
+  border-bottom: none;
 }
 
 .modal-title {
   font-size: 16px;
-  font-weight: 700;
-  color: var(--uni-navy);
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .modal-header .btn-close {
-  opacity: 0.5;
+  filter: invert(1);
+  opacity: 0.7;
 }
 
 .modal-header .btn-close:hover {
-  opacity: 0.8;
+  opacity: 1;
 }
 
 .modal-body {
@@ -595,7 +600,7 @@ input[type="file"] { font-size: 13px; }
 }
 
 .sortable-th:hover {
-  background: var(--uni-border-light) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* ========== RESPONSIVE ========== */

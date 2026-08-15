@@ -56,7 +56,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
           <a href="./index.html" class="text-nowrap logo-img">
             <img src="../assets/images/logos/RMU_logo.png" width="180" height="60" alt="" />
           </a>
-          <div class="close-btn d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
+          <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
             <i class="ti ti-x fs-8"></i>
           </div>
         </div>
@@ -124,7 +124,7 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
       <header class="app-header">
         <nav class="navbar navbar-expand-lg navbar-light">
           <ul class="navbar-nav">
-            <li class="nav-item d-block">
+            <li class="nav-item d-block d-xl-none">
               <a class="nav-link sidebartoggler nav-icon-hover" id="headerCollapse" href="javascript:void(0)">
                 <i class="ti ti-menu-2"></i>
               </a>
@@ -299,8 +299,8 @@ $supervisors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 (function() {
   var w = document.getElementById('main-wrapper'), o = document.getElementById('sidebarOverlay');
   if (!w || !o) return;
-  new MutationObserver(function() { if (window.innerWidth < 1200) o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
-  o.addEventListener('click', function() { w.classList.remove('show-sidebar'); w.classList.remove('mini-sidebar'); w.setAttribute('data-sidebartype','full'); o.classList.remove('active'); });
+  new MutationObserver(function() { o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
+  o.addEventListener('click', function() { w.classList.remove('show-sidebar'); o.classList.remove('active'); });
 })();
 </script>
 

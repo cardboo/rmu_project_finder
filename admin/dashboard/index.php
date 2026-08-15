@@ -78,7 +78,7 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
           <a href="./index.html" class="text-nowrap logo-img">
             <img src="../assets/images/logos/RMU_logo.png" width="180" height="60" alt="" />
           </a>
-          <div class="close-btn d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
+          <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
             <i class="ti ti-x fs-8"></i>
           </div>
         </div>
@@ -150,7 +150,7 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
       <header class="app-header">
         <nav class="navbar navbar-expand-lg navbar-light">
           <ul class="navbar-nav">
-            <li class="nav-item d-block">
+            <li class="nav-item d-block d-xl-none">
               <a class="nav-link sidebartoggler nav-icon-hover" id="headerCollapse" href="javascript:void(0)">
                 <i class="ti ti-menu-2"></i>
               </a>
@@ -253,15 +253,11 @@ $auditLogs = $auditResult->fetch_all(MYSQLI_ASSOC);
     const overlay = document.getElementById('sidebarOverlay');
     if (!wrapper || !overlay) return;
     const observer = new MutationObserver(function() {
-      if (window.innerWidth < 1200) {
-        overlay.classList.toggle('active', wrapper.classList.contains('show-sidebar'));
-      }
+      overlay.classList.toggle('active', wrapper.classList.contains('show-sidebar'));
     });
     observer.observe(wrapper, { attributes: true, attributeFilter: ['class'] });
     overlay.addEventListener('click', function() {
       wrapper.classList.remove('show-sidebar');
-      wrapper.classList.remove('mini-sidebar');
-      wrapper.setAttribute('data-sidebartype', 'full');
       overlay.classList.remove('active');
     });
   })();

@@ -110,14 +110,22 @@ body {
   transition: margin-left 0.3s ease !important;
 }
 
-/* Desktop (>= 1200px): collapse via mini-sidebar class */
+/* Desktop (>= 1200px): full collapse via mini-sidebar */
 @media (min-width: 1200px) {
-  #main-wrapper.mini-sidebar .left-sidebar {
+  #main-wrapper[data-layout="vertical"][data-sidebartype="mini-sidebar"] .left-sidebar {
     left: -270px !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
   }
 
-  #main-wrapper.mini-sidebar .body-wrapper {
+  #main-wrapper[data-layout="vertical"][data-sidebartype="mini-sidebar"] .body-wrapper {
     margin-left: 0 !important;
+  }
+
+  #main-wrapper[data-layout="vertical"][data-sidebartype="mini-sidebar"] .app-header {
+    margin-left: 0 !important;
+    width: 100% !important;
   }
 }
 

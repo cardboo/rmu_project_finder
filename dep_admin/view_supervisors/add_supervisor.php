@@ -1,8 +1,17 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['dep_id'])) {
+    header("Location: ../login/");
+    exit();
+}
+
 include "../datacon.php";
+include "../csrf.php";
+include "../audit_log.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dep_id = $_POST['dep_id'];
+    validate_csrf();
+    $dep_id = $_SESSION['dep_id'];
     $first_name = trim($_POST['first_name']);
     $last_name = trim($_POST['last_name']);
     $email = trim($_POST['email']);
@@ -26,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("ssss", $dep_id, $first_name, $last_name, $email);
 
             if ($stmt->execute()) {
+                audit_log($conn, 'supervisor_created', "Added supervisor: {$first_name} {$last_name} ({$email})");
                 echo "<script>alert('Supervisor added successfully'); window.location.href='index.php';</script>";
             } else {
                 echo "<script>alert('Failed to add supervisor'); window.location.href='index.php';</script>";

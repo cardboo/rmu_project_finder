@@ -2,11 +2,12 @@
 session_start();
 
 if (!isset($_SESSION['username'], $_SESSION['dep_id'])) {
-    header("Location: ../dashboard/");
+    header("Location: ../login/");
     exit();
 }
 
 require "../datacon.php";
+require "../csrf.php";
 require "../../vendor/autoload.php";
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -16,10 +17,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+validate_csrf();
+
 $dep_id = $_SESSION['dep_id'];
 
 if (!isset($_FILES['excel_file']) || $_FILES['excel_file']['error'] !== 0) {
     echo "<script>alert('Please upload a valid Excel file'); window.location.href='index.php';</script>";
+    exit();
+}
+
+// Validate file size (max 5MB)
+if ($_FILES['excel_file']['size'] > 5 * 1024 * 1024) {
+    echo "<script>alert('File too large. Maximum size is 5MB.'); window.location.href='index.php';</script>";
     exit();
 }
 
@@ -66,7 +75,7 @@ try {
             continue;
         }
 
-        if (!in_array($status, ['active', 'archived'])) {
+        if (!in_array($status, ['active', 'retired'])) {
             $status = 'active';
         }
 
@@ -100,8 +109,9 @@ try {
     </script>";
 
 } catch (Exception $e) {
+    error_log("Excel upload error (dep_admin/supervisors): " . $e->getMessage());
     echo "<script>
-        alert('Excel upload failed: {$e->getMessage()}');
+        alert('Excel upload failed. Please check the file format and try again.');
         window.location.href='index.php';
     </script>";
 }

@@ -1,18 +1,21 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-    header("Location: ../dashboard/");
+    header("Location: ../login/");
     exit();
 }
 
 include "../datacon.php";
+include "../csrf.php";
+include "../audit_log.php";
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dep_id = $_POST['dep_id'];
+    validate_csrf();
+    $dep_id = $_SESSION['dep_id'];
     $title = trim($_POST['project_title']);
     $description = trim($_POST['description']);
     $year = (int)$_POST['year'];
@@ -43,11 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die("Only PDF files allowed.");
         }
 
+        // Validate file size (max 10MB)
+        if ($_FILES['project_file']['size'] > 10 * 1024 * 1024) {
+            die("File too large. Maximum size is 10MB.");
+        }
+
         // sanitize filename and create unique name
         $clean = preg_replace("/[^A-Za-z0-9_\-\.]/", "_", $file_name);
         $new_name = time() . '_' . $clean;
         $destination_dir = __DIR__ . '/../uploads/projects/';
-        if (!is_dir($destination_dir)) mkdir($destination_dir, 0777, true);
+        if (!is_dir($destination_dir)) mkdir($destination_dir, 0755, true);
         $destination = $destination_dir . $new_name;
 
         if (!move_uploaded_file($tmp, $destination)) {
@@ -126,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insPS->close();
     }
 
+    audit_log($conn, 'project_created', "Created project: {$title} (year: {$year})");
     $conn->close();
 
     echo "<script>

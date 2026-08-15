@@ -21,7 +21,7 @@
             <div class="card mb-0">
               <div class="card-body">
                 
-                  <img src="../assets/images/logos/rmu.jpg" width="120" height="120" alt="">
+                  <img src="../assets/images/logos/rmu.jpg" width="120" height="120" alt="" style="max-width:100%;height:auto;">
                 <h2>RMU PROJECT FINDER</h2>
                 <p class="text-center">Department Login</p>
 
@@ -35,7 +35,7 @@
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
                     <div class="d-flex align-items-center justify-content-between mb-4">
-                        <a class="text-primary fw-bold" href="./index.html">Forgot Password?</a>
+                        <a class="text-primary fw-bold" href="forgot_password.php">Forgot Password?</a>
                     </div>
                     <button type="submit" class="btn btn-primary w-100 py-8 fs-4 mb-4 rounded-2">Login</button>
                 </form>

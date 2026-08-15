@@ -1,11 +1,12 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-  header("Location:../dashboard/");
+  header("Location:../login/");
   die();
 }
 
 include "../datacon.php";
+include "../csrf.php";
 
 if (!$conn) {
   die("Connection failed: " . mysqli_connect_error());
@@ -30,281 +31,11 @@ $result = $stmt->get_result();
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Add/View Departments  </title>
   <link rel="stylesheet" href="../assets/css/styles.min.css" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/custom-theme.css" />
 
   <style>
-  .content-container {
-    padding-top: 80px; /* adjust if navbar height changes */
-  }
-
-  :root {
-    --uni-navy: #002147;
-    --uni-navy-soft: rgba(0, 33, 71, 0.06);
-    --uni-navy-border: rgba(0, 33, 71, 0.18);
-    --uni-text-muted: #5f6f7a;
-  }
-
-  /* TABLE WRAPPER */
-  .table-responsive {
-    margin-top: 30px;
-    border-radius: 10px;
-    overflow-x: auto;
-  }
-
-  /* BASE TABLE */
-  table.table {
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
-    background-color: #ffffff;
-    box-shadow: 0 10px 28px rgba(0, 33, 71, 0.08);
-    border-radius: 10px;
-  }
-
-  /* TABLE HEADER */
-  table.table thead.table-dark th {
-    background-color: var(--uni-navy) !important;
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 14px 12px;
-    border: none;
-    vertical-align: middle;
-  }
-
-  table.table thead.table-dark th:first-child {
-    border-top-left-radius: 10px;
-  }
-
-  table.table thead.table-dark th:last-child {
-    border-top-right-radius: 10px;
-  }
-
-  /* TABLE BODY ROWS */
-  table.table tbody tr {
-    transition: background-color 0.2s ease;
-  }
-
-  table.table tbody tr:hover {
-    background-color: var(--uni-navy-soft);
-  }
-
-  table.table tbody td {
-    font-size: 14px;
-    color: #2f3f4a;
-    padding: 14px 12px;
-    vertical-align: middle;
-    border-top: 1px solid var(--uni-navy-border);
-    line-height: 1.5;
-  }
-
-  /* FIRST COLUMN (#) */
-  table.table tbody td:first-child {
-    font-weight: 600;
-    color: var(--uni-navy);
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* TITLE COLUMN */
-  table.table tbody td:nth-child(2) {
-    font-weight: 700;
-    color: var(--uni-navy);
-    min-width: 220px;
-  }
-
-  /* DESCRIPTION COLUMN */
-  table.table tbody td:nth-child(3) {
-    color: var(--uni-text-muted);
-    max-width: 360px;
-  }
-
-  /* MEMBERS / SUPERVISORS / TAGS */
-  table.table tbody td:nth-child(5),
-  table.table tbody td:nth-child(6),
-  table.table tbody td:nth-child(7) {
-    font-size: 13px;
-    color: #425a66;
-  }
-
-  /* YEAR COLUMN */
-  table.table tbody td:nth-child(4) {
-    font-weight: 600;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* ACTIONS COLUMN */
-  table.table tbody td:last-child {
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* EDIT BUTTON (Bootstrap-friendly) */
-  .edit-btn {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    border-radius: 6px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .edit-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  }
-
-  /* EMPTY STATE */
-  table.table tbody tr td.text-center {
-    font-style: italic;
-    color: var(--uni-text-muted);
-    padding: 24px;
-    background-color: #fafafa;
-  }
-
-   
-
-  /* MODAL DIALOG */
-  .modal-dialog {
-    margin-top: 5vh;
-  }
-
-  .modal-content {
-    border-radius: 12px;
-    border: none;
-    box-shadow: 0 18px 40px rgba(0, 33, 71, 0.18);
-    overflow: hidden;
-  }
-
-  /* MODAL HEADER */
-  .modal-header {
-    background-color: var(--uni-navy);
-    color: #ffffff;
-    padding: 18px 24px;
-    border-bottom: none;
-  }
-
-  .modal-title {
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .modal-header .btn-close {
-    filter: invert(1);
-    opacity: 0.9;
-  }
-
-  /* MODAL BODY */
-  .modal-body {
-    padding: 26px 28px;
-    background-color: #ffffff;
-  }
-
-  /* FORM LABELS */
-  .modal-body .form-label {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--uni-navy);
-    margin-bottom: 6px;
-  }
-
-  /* FORM INPUTS */
-  .modal-body .form-control,
-  .modal-body .form-select {
-    font-size: 14px;
-    border-radius: 8px;
-    border: 1.5px solid var(--uni-navy-border);
-    padding: 10px 12px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .modal-body .form-control:focus,
-  .modal-body .form-select:focus {
-    border-color: var(--uni-navy);
-    box-shadow: 0 0 0 0.15rem rgba(0, 33, 71, 0.2);
-  }
-
-  /* TEXTAREA */
-  .modal-body textarea.form-control {
-    resize: vertical;
-  }
-
-  /* MEMBER & SUPERVISOR ROWS */
-  .member-row,
-  .supervisor-row {
-    background-color: var(--uni-navy-soft);
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  /* ADD ROW BUTTONS */
-  .modal-body .btn-outline-primary {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    border-radius: 6px;
-    padding: 6px 14px;
-    color: var(--uni-navy);
-    border-color: var(--uni-navy);
-    transition: all 0.2s ease;
-  }
-
-  .modal-body .btn-outline-primary:hover {
-    background-color: var(--uni-navy);
-    color: #ffffff;
-  }
-
-  /* FILE INPUT */
-  input[type="file"] {
-    font-size: 13px;
-  }
-
-  /* MODAL FOOTER */
-  .modal-footer {
-    background-color: #f8fafc;
-    padding: 16px 24px;
-    border-top: 1px solid var(--uni-navy-soft);
-  }
-
-  /* FOOTER BUTTONS */
-  .modal-footer .btn {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 8px 18px;
-    border-radius: 6px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .modal-footer .btn-primary {
-    background-color: var(--uni-navy);
-    border-color: var(--uni-navy);
-  }
-
-  .modal-footer .btn-primary:hover {
-    background-color: #003366;
-  }
-
-  .modal-footer .btn-secondary {
-    background-color: #e9ecef;
-    color: #333;
-    border: none;
-  }
-
-  .modal-footer .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  }
+  table.table tbody td:nth-child(2) { font-weight: 600; color: var(--uni-navy); }
+  table.table tbody td:nth-child(3) { font-weight: 600; color: var(--uni-navy); }
 </style>
 
 </head>
@@ -360,10 +91,17 @@ $result = $stmt->get_result();
                 <span class="hide-menu">View Projects</span>
               </a>
             </li>
-           
+            <li class="sidebar-item">
+              <a class="sidebar-link" href="../change_password" aria-expanded="false">
+                <span>
+                  <i class="ti ti-lock"></i>
+                </span>
+                <span class="hide-menu">Change Password</span>
+              </a>
+            </li>
 
             <li class="sidebar-item">
-              <a class="sidebar-link" href="../logout" aria-expanded="false">
+              <a class="sidebar-link" href="../logout" aria-expanded="false" onclick="return confirm('Are you sure you want to logout?')">
                 <span>
                   <i class="ti ti-typography"></i>
                 </span>
@@ -377,11 +115,19 @@ $result = $stmt->get_result();
       <!-- End Sidebar scroll-->
     </aside>
     <!--  Sidebar End -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <!--  Main wrapper -->
     <div class="body-wrapper">
       <!--  Header Start -->
       <header class="app-header">
-       
+        <nav class="navbar navbar-expand-lg navbar-light">
+          <ul class="navbar-nav">
+            <li class="nav-item d-block d-xl-none">
+              <a class="nav-link sidebartoggler nav-icon-hover" id="headerCollapse" href="javascript:void(0)">
+                <i class="ti ti-menu-2"></i>
+              </a>
+            </li>
+          </ul>
         </nav>
       </header>
 <div class="container content-container">
@@ -398,7 +144,7 @@ $result = $stmt->get_result();
  <!-- Departments Table -->
 <div class="table-responsive">
     <table class="table table-striped table-bordered align-middle">
-        <thead class="table-dark">
+        <thead class="">
             <tr>
                 <th>#</th>
                 <th>Department ID</th>
@@ -437,9 +183,10 @@ $result = $stmt->get_result();
                         Edit
                     </button>
 
-                    <form action="delete_department.php" method="POST" style="display:inline;">
+                    <form action="archive_department.php" method="POST" style="display:inline;">
+                        <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this department?');">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to archive this department?');">
                             Archive
                         </button>
                     </form>
@@ -460,6 +207,7 @@ $result = $stmt->get_result();
 <div class="modal fade" id="addProjectModal" tabindex="-1" aria-labelledby="addProjectLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form action="add_department.php" method="POST" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="addProjectLabel">Add a Department</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -498,11 +246,12 @@ $result = $stmt->get_result();
 <div class="modal fade" id="editDepartmentModal" tabindex="-1" aria-labelledby="editDepartmentModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form id="editDepartmentForm" method="POST" action="update_department.php" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="editDepartmentModalLabel">Edit Department</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      
+
       <div class="modal-body">
         <input type="hidden" name="id" id="edit_id">
 
@@ -540,6 +289,7 @@ $result = $stmt->get_result();
 <div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form action="upload_excel.php" method="POST" enctype="multipart/form-data" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="uploadExcelLabel">Upload Projects Excel</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -561,9 +311,16 @@ $result = $stmt->get_result();
 
 <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
 <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-
+<script src="../assets/js/sidebarmenu.js"></script>
+<script src="../assets/js/app.min.js"></script>
+<script>
+(function() {
+  var w = document.getElementById('main-wrapper'), o = document.getElementById('sidebarOverlay');
+  if (!w || !o) return;
+  new MutationObserver(function() { o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
+  o.addEventListener('click', function() { w.classList.remove('show-sidebar'); o.classList.remove('active'); });
+})();
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

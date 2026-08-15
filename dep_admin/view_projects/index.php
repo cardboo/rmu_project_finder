@@ -1,11 +1,12 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-    header("Location:../dashboard/");
+    header("Location:../login/");
     die();
 }
 
 include "../datacon.php";
+include "../csrf.php";
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
@@ -14,29 +15,33 @@ if (!$conn) {
 $dep_id = $_SESSION['dep_id'];
 $dep_name = $_SESSION['dep_name'];
 
-/** ✅ Fetch all projects for this department **/
- $sql = "
-SELECT 
+/** Fetch all projects for this department **/
+$showArchived = isset($_GET['show_archived']) && $_GET['show_archived'] === '1';
+$page = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 12;
+
+$sql = "
+SELECT
     p.id AS project_id,
     p.title AS project_title,
     p.synopsis AS description,
     p.year,
-    p.file_path,   -- FIXED
+    p.file_path,
+    p.is_archived,
     m.student_name,
     m.index_number,
     t.name AS tag_name,
     ps.supervisor_id,
     s.first_name,
     s.last_name
-
 FROM projects p
 LEFT JOIN project_members m ON p.id = m.project_id
- LEFT JOIN project_tags pt ON p.id = pt.project_id
- LEFT JOIN tags t ON pt.tag_id = t.id
- LEFT JOIN project_supervisors ps ON p.id = ps.project_id
- LEFT JOIN supervisors s ON ps.supervisor_id = s.id
- WHERE p.dep_id = ?
- ORDER BY p.year DESC, p.id";
+LEFT JOIN project_tags pt ON p.id = pt.project_id
+LEFT JOIN tags t ON pt.tag_id = t.id
+LEFT JOIN project_supervisors ps ON p.id = ps.project_id
+LEFT JOIN supervisors s ON ps.supervisor_id = s.id
+WHERE p.dep_id = ?
+ORDER BY p.is_archived ASC, p.year DESC, p.id";
 
 
 
@@ -67,10 +72,11 @@ while ($row = $projectResult->fetch_assoc()) {
             'project_title' => $row['project_title'],
             'description' => $row['description'],
             'year' => $row['year'],
-            'file_path' => $row['file_path'] ?? '', // add file path
+            'file_path' => $row['file_path'] ?? '',
+            'is_archived' => $row['is_archived'] ?? 0,
             'members' => [],
             'tags' => [],
-            'supervisors' => [] // initialize supervisors
+            'supervisors' => []
         ];
     }
 
@@ -111,280 +117,15 @@ while ($row = $projectResult->fetch_assoc()) {
   <title>View Projects - <?= htmlspecialchars($dep_name) ?></title>
   <link rel="shortcut icon" type="image/png" href="../assets/images/logos/rmu.jpg" />
   <link rel="stylesheet" href="../assets/css/styles.min.css" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/custom-theme.css" />
 
   <style>
-  .content-container {
-    padding-top: 80px; /* adjust if navbar height changes */
-  }
-  :root {
-    --uni-navy: #002147;
-    --uni-navy-soft: rgba(0, 33, 71, 0.06);
-    --uni-navy-border: rgba(0, 33, 71, 0.18);
-    --uni-text-muted: #5f6f7a;
-  }
-
-  /* TABLE WRAPPER */
-  .table-responsive {
-    margin-top: 30px;
-    border-radius: 10px;
-    overflow-x: auto;
-  }
-
-  /* BASE TABLE */
-  table.table {
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
-    background-color: #ffffff;
-    box-shadow: 0 10px 28px rgba(0, 33, 71, 0.08);
-    border-radius: 10px;
-  }
-
-  /* TABLE HEADER */
-  table.table thead.table-dark th {
-    background-color: var(--uni-navy) !important;
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 14px 12px;
-    border: none;
-    vertical-align: middle;
-  }
-
-  table.table thead.table-dark th:first-child {
-    border-top-left-radius: 10px;
-  }
-
-  table.table thead.table-dark th:last-child {
-    border-top-right-radius: 10px;
-  }
-
-  /* TABLE BODY ROWS */
-  table.table tbody tr {
-    transition: background-color 0.2s ease;
-  }
-
-  table.table tbody tr:hover {
-    background-color: var(--uni-navy-soft);
-  }
-
-  table.table tbody td {
-    font-size: 14px;
-    color: #2f3f4a;
-    padding: 14px 12px;
-    vertical-align: middle;
-    border-top: 1px solid var(--uni-navy-border);
-    line-height: 1.5;
-  }
-
-  /* FIRST COLUMN (#) */
-  table.table tbody td:first-child {
-    font-weight: 600;
-    color: var(--uni-navy);
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* TITLE COLUMN */
-  table.table tbody td:nth-child(2) {
-    font-weight: 700;
-    color: var(--uni-navy);
-    min-width: 220px;
-  }
-
-  /* DESCRIPTION COLUMN */
-  table.table tbody td:nth-child(3) {
-    color: var(--uni-text-muted);
-    max-width: 360px;
-  }
-
-  /* MEMBERS / SUPERVISORS / TAGS */
+  table.table tbody td:nth-child(2) { font-weight: 600; color: var(--uni-navy); }
+  table.table tbody td:nth-child(3) { color: var(--uni-text-muted); }
+  table.table tbody td:nth-child(4) { font-weight: 600; text-align: center; white-space: nowrap; }
   table.table tbody td:nth-child(5),
   table.table tbody td:nth-child(6),
-  table.table tbody td:nth-child(7) {
-    font-size: 13px;
-    color: #425a66;
-  }
-
-  /* YEAR COLUMN */
-  table.table tbody td:nth-child(4) {
-    font-weight: 600;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* ACTIONS COLUMN */
-  table.table tbody td:last-child {
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* EDIT BUTTON (Bootstrap-friendly) */
-  .edit-btn {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    border-radius: 6px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .edit-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  }
-
-  /* EMPTY STATE */
-  table.table tbody tr td.text-center {
-    font-style: italic;
-    color: var(--uni-text-muted);
-    padding: 24px;
-    background-color: #fafafa;
-  }
-
-   
-
-  /* MODAL DIALOG */
-  .modal-dialog {
-    margin-top: 5vh;
-  }
-
-  .modal-content {
-    border-radius: 12px;
-    border: none;
-    box-shadow: 0 18px 40px rgba(0, 33, 71, 0.18);
-    overflow: hidden;
-  }
-
-  /* MODAL HEADER */
-  .modal-header {
-    background-color: var(--uni-navy);
-    color: #ffffff;
-    padding: 18px 24px;
-    border-bottom: none;
-  }
-
-  .modal-title {
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .modal-header .btn-close {
-    filter: invert(1);
-    opacity: 0.9;
-  }
-
-  /* MODAL BODY */
-  .modal-body {
-    padding: 26px 28px;
-    background-color: #ffffff;
-  }
-
-  /* FORM LABELS */
-  .modal-body .form-label {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--uni-navy);
-    margin-bottom: 6px;
-  }
-
-  /* FORM INPUTS */
-  .modal-body .form-control,
-  .modal-body .form-select {
-    font-size: 14px;
-    border-radius: 8px;
-    border: 1.5px solid var(--uni-navy-border);
-    padding: 10px 12px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .modal-body .form-control:focus,
-  .modal-body .form-select:focus {
-    border-color: var(--uni-navy);
-    box-shadow: 0 0 0 0.15rem rgba(0, 33, 71, 0.2);
-  }
-
-  /* TEXTAREA */
-  .modal-body textarea.form-control {
-    resize: vertical;
-  }
-
-  /* MEMBER & SUPERVISOR ROWS */
-  .member-row,
-  .supervisor-row {
-    background-color: var(--uni-navy-soft);
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  /* ADD ROW BUTTONS */
-  .modal-body .btn-outline-primary {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    border-radius: 6px;
-    padding: 6px 14px;
-    color: var(--uni-navy);
-    border-color: var(--uni-navy);
-    transition: all 0.2s ease;
-  }
-
-  .modal-body .btn-outline-primary:hover {
-    background-color: var(--uni-navy);
-    color: #ffffff;
-  }
-
-  /* FILE INPUT */
-  input[type="file"] {
-    font-size: 13px;
-  }
-
-  /* MODAL FOOTER */
-  .modal-footer {
-    background-color: #f8fafc;
-    padding: 16px 24px;
-    border-top: 1px solid var(--uni-navy-soft);
-  }
-
-  /* FOOTER BUTTONS */
-  .modal-footer .btn {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 8px 18px;
-    border-radius: 6px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .modal-footer .btn-primary {
-    background-color: var(--uni-navy);
-    border-color: var(--uni-navy);
-  }
-
-  .modal-footer .btn-primary:hover {
-    background-color: #003366;
-  }
-
-  .modal-footer .btn-secondary {
-    background-color: #e9ecef;
-    color: #333;
-    border: none;
-  }
-
-  .modal-footer .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  }
+  table.table tbody td:nth-child(7) { font-size: 13px; color: var(--uni-text-muted); }
 </style>
 
 </head>
@@ -437,44 +178,62 @@ while ($row = $projectResult->fetch_assoc()) {
                 <span class="hide-menu">Add/ View Supervisors</span>
               </a>
             </li>
-           
             <li class="sidebar-item">
-              <a class="sidebar-link" href="../logout" aria-expanded="false">
+              <a class="sidebar-link" href="../change_password" aria-expanded="false">
+                <span>
+                  <i class="ti ti-lock"></i>
+                </span>
+                <span class="hide-menu">Change Password</span>
+              </a>
+            </li>
+
+            <li class="sidebar-item">
+              <a class="sidebar-link" href="../logout" aria-expanded="false" onclick="return confirm('Are you sure you want to logout?')">
                 <span>
                   <i class="ti ti-typography"></i>
                 </span>
                 <span class="hide-menu">Logout</span>
               </a>
             </li>
-            
+
         </nav>
         <!-- End Sidebar navigation -->
       </div>
       <!-- End Sidebar scroll-->
     </aside>
     <!--  Sidebar End -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <!--  Main wrapper -->
     <div class="body-wrapper">
       <!--  Header Start -->
       <header class="app-header">
-       
+        <nav class="navbar navbar-expand-lg navbar-light">
+          <ul class="navbar-nav">
+            <li class="nav-item d-block d-xl-none">
+              <a class="nav-link sidebartoggler nav-icon-hover" id="headerCollapse" href="javascript:void(0)">
+                <i class="ti ti-menu-2"></i>
+              </a>
+            </li>
+          </ul>
         </nav>
       </header>
 <div class="container content-container">
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h2>Projects for Department: <?= htmlspecialchars($dep_name) ?></h2>
-    <div>
-      <!-- Buttons trigger modals -->
-      <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addProjectModal">Add a New Project</button>
-     
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <a href="?show_archived=<?= $showArchived ? '0' : '1' ?>" class="btn <?= $showArchived ? 'btn-outline-secondary' : 'btn-outline-primary' ?> btn-sm">
+        <?= $showArchived ? 'Hide Archived' : 'Show Archived' ?>
+      </a>
+      <button class="btn btn-info text-white" onclick="exportCSV()">Export CSV</button>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">Add a New Project</button>
     </div>
   </div>
 
 <!-- Projects Table -->
 <div class="table-responsive">
     <table class="table table-striped table-bordered align-middle">
-        <thead class="table-dark">
+        <thead class="">
             <tr>
                 <th>#</th>
                 <th>Project Title</th>
@@ -487,61 +246,130 @@ while ($row = $projectResult->fetch_assoc()) {
             </tr>
         </thead>
         <tbody>
-            <?php if (empty($projects)): ?>
+            <?php
+                // Separate active and archived
+                $activeProjects = array_filter($projects, fn($p) => !$p['is_archived']);
+                $archivedProjects = array_filter($projects, fn($p) => $p['is_archived']);
+                $allDisplayProjects = $showArchived ? $projects : $activeProjects;
+                $totalProj = count($allDisplayProjects);
+                $totalPages = ceil($totalProj / $perPage);
+                $page = min($page, max(1, $totalPages));
+                $displayProjects = array_slice(array_values($allDisplayProjects), ($page - 1) * $perPage, $perPage);
+                $startNum = ($page - 1) * $perPage;
+            ?>
+            <?php if (empty($displayProjects)): ?>
                 <tr>
                     <td colspan="8" class="text-center">No projects found.</td>
                 </tr>
             <?php else: ?>
-                <?php $counter = 1; ?>
-                <?php foreach ($projects as $proj): ?>
+                <?php $counter = $startNum + 1; ?>
+                <?php foreach ($displayProjects as $proj): ?>
                     <?php
-                        // Prepare members list for display
                         $memberList = array_map(function ($m) {
                             return htmlspecialchars($m['student_name'] . ' (' . $m['index_number'] . ')');
                         }, $proj['members']);
                         $membersDisplay = implode(', ', $memberList);
-
-                        // Prepare tags list for display
                         $tagsDisplay = implode(', ', array_map('htmlspecialchars', $proj['tags']));
-
-                       $supervisorDisplay = implode(', ', array_map(fn($s) => htmlspecialchars($s['full_name']), $proj['supervisors']));
-
+                        $supervisorDisplay = implode(', ', array_map(fn($s) => htmlspecialchars($s['full_name']), $proj['supervisors']));
+                        $isArchived = $proj['is_archived'];
                     ?>
-                    <tr>
+                    <tr<?= $isArchived ? ' class="archived-row"' : '' ?>>
                         <td><?= $counter++ ?></td>
-                        <td><?= htmlspecialchars($proj['project_title']) ?></td>
+                        <td>
+                            <?= htmlspecialchars($proj['project_title']) ?>
+                            <?php if ($isArchived): ?>
+                                <span class="archived-badge">ARCHIVED</span>
+                            <?php endif; ?>
+                        </td>
                         <td><?= htmlspecialchars($proj['description']) ?></td>
                         <td><?= htmlspecialchars($proj['year']) ?></td>
                         <td><?= $membersDisplay ?></td>
-                       <td><?= $supervisorDisplay ?: 'No supervisor assigned' ?></td>
+                        <td><?= $supervisorDisplay ?: 'No supervisor assigned' ?></td>
                         <td><?= $tagsDisplay ?></td>
-                        <td>
-              <button class="btn btn-sm btn-warning edit-btn"
-    data-id="<?= $proj['id'] ?>"
-    data-title="<?= htmlspecialchars($proj['project_title'], ENT_QUOTES) ?>"
-    data-description="<?= htmlspecialchars($proj['description'], ENT_QUOTES) ?>"
-    data-year="<?= $proj['year'] ?>"
-    data-tags="<?= htmlspecialchars(implode(',', $proj['tags']), ENT_QUOTES) ?>"
-    data-file="<?= htmlspecialchars($proj['file_path'], ENT_QUOTES) ?>"
-    data-members='<?= json_encode($proj["members"], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
-    data-supervisors='<?= json_encode(array_column($proj["supervisors"], "id"), JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
-    data-supervisors-list='<?= json_encode($supervisors, JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
-    data-bs-toggle="modal"
-    data-bs-target="#editProjectModal">
-    Edit
-</button>
-           
+                        <td class="action-cell">
+                            <?php if (!$isArchived): ?>
+                                <button class="btn btn-sm btn-warning edit-btn"
+                                    data-id="<?= $proj['id'] ?>"
+                                    data-title="<?= htmlspecialchars($proj['project_title'], ENT_QUOTES) ?>"
+                                    data-description="<?= htmlspecialchars($proj['description'], ENT_QUOTES) ?>"
+                                    data-year="<?= $proj['year'] ?>"
+                                    data-tags="<?= htmlspecialchars(implode(',', $proj['tags']), ENT_QUOTES) ?>"
+                                    data-file="<?= htmlspecialchars($proj['file_path'], ENT_QUOTES) ?>"
+                                    data-members='<?= json_encode($proj["members"], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+                                    data-supervisors='<?= json_encode(array_column($proj["supervisors"], "id"), JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+                                    data-supervisors-list='<?= json_encode($supervisors, JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editProjectModal">
+                                    Edit
+                                </button>
+                                <form action="archive_project.php" method="POST" class="inline-form">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="id" value="<?= $proj['id'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to archive this project?');">Archive</button>
+                                </form>
+                            <?php else: ?>
+                                <form action="unarchive_project.php" method="POST" class="inline-form">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="id" value="<?= $proj['id'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Restore this project?');">Unarchive</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
         </tbody>
     </table>
+
+    <?php if ($totalPages > 1): ?>
+    <nav class="d-flex justify-content-center mt-3">
+      <ul class="pagination mb-0">
+        <?php
+          // Build current URL params (preserve show_archived)
+          $urlParams = [];
+          if ($showArchived) $urlParams['show_archived'] = '1';
+        ?>
+        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+          <a class="page-link" href="?<?= http_build_query(array_merge($urlParams, ['page' => $page - 1])) ?>">&laquo;</a>
+        </li>
+        <?php
+          $pages = [1];
+          if ($page > 3) $pages[] = '...';
+          for ($i = max(2, $page - 1); $i <= min($totalPages - 1, $page + 1); $i++) {
+            $pages[] = $i;
+          }
+          if ($page < $totalPages - 2) $pages[] = '...';
+          if ($totalPages > 1) $pages[] = $totalPages;
+
+          foreach ($pages as $pg):
+            if ($pg === '...'):
+        ?>
+              <li class="page-item disabled"><span class="page-link">...</span></li>
+        <?php else: ?>
+              <li class="page-item <?= $pg === $page ? 'active' : '' ?>">
+                <a class="page-link" href="?<?= http_build_query(array_merge($urlParams, ['page' => $pg])) ?>"><?= $pg ?></a>
+              </li>
+        <?php
+            endif;
+          endforeach;
+        ?>
+        <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+          <a class="page-link" href="?<?= http_build_query(array_merge($urlParams, ['page' => $page + 1])) ?>">&raquo;</a>
+        </li>
+      </ul>
+    </nav>
+    <?php endif; ?>
+
+    <p class="pagination-summary">
+      Showing <?= $startNum + 1 ?>–<?= min($startNum + $perPage, $totalProj) ?> of <?= $totalProj ?> project<?= $totalProj !== 1 ? 's' : '' ?>
+    </p>
 </div>
 
 <!-- Add Single Project Modal -->
 <div class="modal fade" id="addProjectModal" tabindex="-1" aria-labelledby="addProjectLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <form action="add_project.php" method="POST" enctype="multipart/form-data" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="addProjectLabel">Add Past Project</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -590,7 +418,7 @@ while ($row = $projectResult->fetch_assoc()) {
             <div class="mt-3">
   <label class="form-label fw-bold">File Preview</label>
 
-  <div id="filePreviewWrapper" class="border rounded" style="height: 400px; display: none;">
+  <div id="filePreviewWrapper" class="border rounded pdf-preview-container" style="display: none;">
     <iframe
       id="filePreviewFrame"
       width="100%"
@@ -610,7 +438,7 @@ while ($row = $projectResult->fetch_assoc()) {
   <div id="supervisors-container">
     <div class="supervisor-row row mb-2">
       <div class="col">
-        <select name="supervisors[]" class="form-select" required>
+        <select name="supervisors[]" class="form-select" required onchange="refreshSupervisorDropdowns('supervisors-container')">
     <option value="">Select Supervisor</option>
     <?php foreach ($supervisors as $sup): ?>
         <option value="<?= $sup['id'] ?>"><?= htmlspecialchars($sup['full_name']) ?></option>
@@ -635,6 +463,7 @@ while ($row = $projectResult->fetch_assoc()) {
 <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <form id="editProjectForm" action="update_project.php" method="POST" enctype="multipart/form-data" class="modal-content">
+      <?= csrf_field() ?>
       <div class="modal-header">
         <h5 class="modal-title" id="editProjectLabel">Edit Project</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -673,7 +502,6 @@ while ($row = $projectResult->fetch_assoc()) {
         <!-- File Upload -->
         <div class="mb-3">
           <label class="form-label">Current File: <span id="current_file"></span></label><br>
-          <input type="hidden" name="existing_file_path" id="existing_file_path">
           <label for="edit_project_file" class="form-label">Replace File (PDF ONLY)</label>
           <input type="file" name="project_file" id="edit_project_file" class="form-control" accept=".pdf" />
         </div>
@@ -682,7 +510,7 @@ while ($row = $projectResult->fetch_assoc()) {
         <div class="mt-3">
         <label class="form-label fw-bold">Current / New File Preview</label>
 
-        <div id="editFilePreviewWrapper" class="border rounded" style="height: 400px; display: none;">
+        <div id="editFilePreviewWrapper" class="border rounded pdf-preview-container" style="display: none;">
           <iframe
             id="editFilePreviewFrame"
             width="100%"
@@ -719,8 +547,16 @@ while ($row = $projectResult->fetch_assoc()) {
 
 <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
 <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+<script src="../assets/js/sidebarmenu.js"></script>
+<script src="../assets/js/app.min.js"></script>
+<script>
+(function() {
+  var w = document.getElementById('main-wrapper'), o = document.getElementById('sidebarOverlay');
+  if (!w || !o) return;
+  new MutationObserver(function() { o.classList.toggle('active', w.classList.contains('show-sidebar')); }).observe(w, { attributes: true, attributeFilter: ['class'] });
+  o.addEventListener('click', function() { w.classList.remove('show-sidebar'); o.classList.remove('active'); });
+})();
+</script>
 
 <script>
   function addMemberRow() {
@@ -763,26 +599,38 @@ function addEditMemberRow(name = '', index = '') {
     container.appendChild(memberRow);
 }
 
-function addEditSupervisorRow(supervisorId = '', supervisorsList = []) {
+// Global variable to store supervisors list for the edit modal
+let currentEditSupervisorsList = [];
+
+function addEditSupervisorRow(supervisorId = '', supervisorsList = null) {
+    // Use global list if none provided (e.g. from "+ Add Supervisor" button)
+    if (!supervisorsList || supervisorsList.length === 0) {
+        supervisorsList = currentEditSupervisorsList;
+    }
     const container = document.getElementById('edit-supervisors-container');
+    const takenIds = getSelectedSupervisorIds('edit-supervisors-container', null);
     const supervisorRow = document.createElement('div');
     supervisorRow.className = 'supervisor-row row mb-2';
 
-    // Build options dynamically from supervisorsList
+    // Build options dynamically, omitting already-selected supervisors
     let options = '<option value="">Select Supervisor</option>';
     supervisorsList.forEach(s => {
-        const selected = (s.id == supervisorId) ? 'selected' : '';
-        options += `<option value="${s.id}" ${selected}>${s.full_name}</option>`;
+        const sid = String(s.id);
+        const isCurrentRow = (sid == supervisorId);
+        if (!takenIds.includes(sid) || isCurrentRow) {
+            const selected = isCurrentRow ? 'selected' : '';
+            options += `<option value="${s.id}" ${selected}>${s.full_name}</option>`;
+        }
     });
 
     supervisorRow.innerHTML = `
         <div class="col">
-            <select name="supervisors[]" class="form-select" required>
+            <select name="supervisors[]" class="form-select" required onchange="refreshSupervisorDropdowns('edit-supervisors-container', currentEditSupervisorsList)">
                 ${options}
             </select>
         </div>
         <div class="col-auto">
-            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.supervisor-row').remove()">×</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.supervisor-row').remove(); refreshSupervisorDropdowns('edit-supervisors-container', currentEditSupervisorsList)">×</button>
         </div>
     `;
     container.appendChild(supervisorRow);
@@ -799,6 +647,9 @@ document.querySelectorAll('.edit-btn').forEach(button => {
         const membersData = JSON.parse(this.getAttribute('data-members') || '[]');
         const supervisorsData = JSON.parse(this.getAttribute('data-supervisors') || '[]');
         const supervisorsList = JSON.parse(this.getAttribute('data-supervisors-list') || '[]'); // All supervisors from DB
+
+        // Store globally so "+ Add Supervisor" button can use it
+        currentEditSupervisorsList = supervisorsList;
 
         document.getElementById('edit_project_id').value = id;
         document.getElementById('edit_project_title').value = title;
@@ -905,26 +756,60 @@ document.getElementById('edit_project_file').addEventListener('change', function
 
 
 <script>
-const supervisorOptions = `<?php
-foreach ($supervisors as $sup) {
-    echo '<option value="' . $sup['id'] . '">' . htmlspecialchars($sup['full_name']) . '</option>';
+const allSupervisorsAdd = <?= json_encode($supervisors, JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+// Get currently selected supervisor IDs in a container
+function getSelectedSupervisorIds(containerId, excludeSelect) {
+    const selects = document.querySelectorAll('#' + containerId + ' select[name="supervisors[]"]');
+    const ids = [];
+    selects.forEach(s => {
+        if (s !== excludeSelect && s.value) ids.push(s.value);
+    });
+    return ids;
 }
-?>`;
+
+// Refresh all supervisor dropdowns in a container to hide already-picked options
+function refreshSupervisorDropdowns(containerId, supervisorsList) {
+    const list = supervisorsList || allSupervisorsAdd;
+    const selects = document.querySelectorAll('#' + containerId + ' select[name="supervisors[]"]');
+    selects.forEach(sel => {
+        const currentVal = sel.value;
+        const takenIds = getSelectedSupervisorIds(containerId, sel);
+        sel.innerHTML = '<option value="">Select Supervisor</option>';
+        list.forEach(s => {
+            const sid = String(s.id);
+            if (!takenIds.includes(sid) || sid === currentVal) {
+                const opt = document.createElement('option');
+                opt.value = sid;
+                opt.textContent = s.full_name;
+                if (sid === currentVal) opt.selected = true;
+                sel.appendChild(opt);
+            }
+        });
+    });
+}
 
 function addSupervisorRow() {
     const container = document.getElementById('supervisors-container');
+    const takenIds = getSelectedSupervisorIds('supervisors-container', null);
     const newRow = document.createElement('div');
     newRow.classList.add('supervisor-row', 'row', 'mb-2');
 
+    let options = '<option value="">Select Supervisor</option>';
+    allSupervisorsAdd.forEach(s => {
+        if (!takenIds.includes(String(s.id))) {
+            options += `<option value="${s.id}">${s.full_name}</option>`;
+        }
+    });
+
     newRow.innerHTML = `
         <div class="col">
-            <select name="supervisors[]" class="form-select" required>
-                <option value="">Select Supervisor</option>
-                ${supervisorOptions}
+            <select name="supervisors[]" class="form-select" required onchange="refreshSupervisorDropdowns('supervisors-container')">
+                ${options}
             </select>
         </div>
         <div class="col-auto">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.supervisor-row').remove()">-</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.supervisor-row').remove(); refreshSupervisorDropdowns('supervisors-container')">-</button>
         </div>
     `;
     container.appendChild(newRow);
@@ -972,6 +857,86 @@ addProjectModal.addEventListener('hidden.bs.modal', () => {
   document.getElementById('filePreviewWrapper').style.display = 'none';
   document.getElementById('noFilePreview').style.display = 'block';
 });
+</script>
+
+<script>
+// Auto-generate tags from project title keywords
+(function() {
+  const stopWords = new Set([
+    'the','a','an','and','or','but','in','on','at','to','for','of','with','by',
+    'from','as','is','was','are','were','be','been','being','have','has','had',
+    'do','does','did','will','would','shall','should','can','could','may','might',
+    'must','that','this','these','those','it','its','not','no','so','if','then',
+    'than','too','very','just','about','above','after','again','all','also','am',
+    'any','because','before','between','both','during','each','few','further',
+    'here','how','into','more','most','other','our','out','own','same','some',
+    'such','there','through','under','until','up','what','when','where','which',
+    'while','who','whom','why','you','your','using','based','study','analysis',
+    'development','design','system','project','research','implementation','use'
+  ]);
+
+  function generateTags(title) {
+    if (!title.trim()) return '';
+    const words = title.split(/[\s\-\/,;:()]+/)
+      .map(w => w.replace(/[^a-zA-Z0-9]/g, '').toLowerCase())
+      .filter(w => w.length > 2 && !stopWords.has(w));
+    const unique = [...new Set(words)];
+    return unique.slice(0, 6).join(', ');
+  }
+
+  // Add project modal - auto-generate tags on title blur
+  const addTitle = document.getElementById('project_title');
+  const addTags = document.getElementById('tags');
+  if (addTitle && addTags) {
+    addTitle.addEventListener('blur', function() {
+      if (addTags.value.trim() === '') {
+        addTags.value = generateTags(this.value);
+      }
+    });
+  }
+
+  // Edit project modal - auto-generate tags on title blur if tags are empty
+  const editTitle = document.getElementById('edit_project_title');
+  const editTags = document.getElementById('edit_tags');
+  if (editTitle && editTags) {
+    editTitle.addEventListener('blur', function() {
+      if (editTags.value.trim() === '') {
+        editTags.value = generateTags(this.value);
+      }
+    });
+  }
+})();
+</script>
+
+<script>
+function exportCSV() {
+  const table = document.querySelector('table.table');
+  if (!table) return;
+  const rows = table.querySelectorAll('tr');
+  let csv = [];
+  rows.forEach((row, i) => {
+    const cells = row.querySelectorAll('th, td');
+    if (cells.length < 2) return;
+    const lastIdx = cells.length - 1;
+    const rowData = [];
+    cells.forEach((cell, j) => {
+      if (j === lastIdx && i > 0) return;
+      if (j === lastIdx && i === 0) { rowData.push('"Status"'); return; }
+      let text = cell.textContent.trim().replace(/\s+/g, ' ');
+      rowData.push('"' + text.replace(/"/g, '""') + '"');
+    });
+    if (i > 0) {
+      const archived = row.style.opacity === '0.6' ? 'Archived' : 'Active';
+      rowData.push('"' + archived + '"');
+    }
+    csv.push(rowData.join(','));
+  });
+  const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = '<?= preg_replace("/[^a-zA-Z0-9]/", "_", $dep_name) ?>_projects.csv';
+  link.click();
+}
 </script>
 
 </body>

@@ -2,24 +2,32 @@
 session_start();
 require "../datacon.php";
 
-// 🔒 Ensure user is logged in and has a department
-if (!isset($_SESSION['dep_id'])) {
+// Ensure user is logged in as admin
+if (!isset($_SESSION['username'])) {
     exit('Unauthorized');
 }
 
-$dep_id = $_SESSION['dep_id']; // e.g. "Dep 001"
-
 // Optional filters from UI
+$department = $_GET['department'] ?? '';
 $year = $_GET['year'] ?? '';
 $q    = $_GET['q'] ?? '';
 $sort = $_GET['sort'] ?? 'year_desc';
+$page  = max(1, (int)($_GET['page'] ?? 1));
+$limit = 12;
+$offset = ($page - 1) * $limit;
 
 // ============================
 // Build WHERE conditions
 // ============================
-$where  = ["p.dep_id = ?"]; // mandatory
-$params = [$dep_id];
-$types  = "s"; // dep_id is VARCHAR
+$where  = ["(p.is_archived = 0 OR p.is_archived IS NULL)"];
+$params = [];
+$types  = "";
+
+if (!empty($department)) {
+    $where[]  = "p.dep_id = ?";
+    $params[] = $department;
+    $types   .= "s";
+}
 
 if ($year !== '') {
     $where[]  = "p.year = ?";
@@ -34,22 +42,62 @@ if (!empty($_GET['q'])) {
     $types .= "sss";
 }
 
+$supervisor = $_GET['supervisor'] ?? '';
+if ($supervisor !== '') {
+    $where[]  = "ps.supervisor_id = ?";
+    $params[] = (int)$supervisor;
+    $types   .= "i";
+}
+
+$tag = $_GET['tag'] ?? '';
+if ($tag !== '') {
+    $where[]  = "pt.tag_id = ?";
+    $params[] = (int)$tag;
+    $types   .= "i";
+}
+
 // ============================
 // Sorting
 // ============================
-// PHP 7-compatible replacement for match
 $sortMap = [
     'year_asc'   => 'p.year ASC',
     'title_asc'  => 'p.title ASC',
     'title_desc' => 'p.title DESC',
+    'dep_asc'    => 'd.dep_name ASC',
+    'dep_desc'   => 'd.dep_name DESC',
 ];
 $orderBy = $sortMap[$sort] ?? 'p.year DESC';
+
+// ============================
+// Count total results
+// ============================
+$whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+$countSql = "
+SELECT COUNT(DISTINCT p.id) AS total
+FROM projects p
+LEFT JOIN departments d ON p.dep_id = d.dep_id
+LEFT JOIN project_members pm ON p.id = pm.project_id
+LEFT JOIN project_supervisors ps ON p.id = ps.project_id
+LEFT JOIN supervisors s ON ps.supervisor_id = s.id
+LEFT JOIN project_tags pt ON p.id = pt.project_id
+LEFT JOIN tags t ON pt.tag_id = t.id
+{$whereClause}
+";
+
+$countStmt = $conn->prepare($countSql);
+if ($params) {
+    $countStmt->bind_param($types, ...$params);
+}
+$countStmt->execute();
+$total = $countStmt->get_result()->fetch_assoc()['total'];
+$totalPages = ceil($total / $limit);
 
 // ============================
 // Main SQL
 // ============================
 $sql = "
-SELECT 
+SELECT
     p.id,
     p.title,
     p.synopsis,
@@ -66,17 +114,21 @@ LEFT JOIN project_supervisors ps ON p.id = ps.project_id
 LEFT JOIN supervisors s ON ps.supervisor_id = s.id
 LEFT JOIN project_tags pt ON p.id = pt.project_id
 LEFT JOIN tags t ON pt.tag_id = t.id
-WHERE " . implode(" AND ", $where) . "
+{$whereClause}
 GROUP BY p.id
 ORDER BY $orderBy
+LIMIT ? OFFSET ?
 ";
 
 // ============================
 // Prepare & Execute
 // ============================
+$paginatedTypes = $types . 'ii';
+$paginatedParams = array_merge($params, [$limit, $offset]);
+
 $stmt = $conn->prepare($sql);
-if ($params) {
-    $stmt->bind_param($types, ...$params);
+if ($paginatedParams) {
+    $stmt->bind_param($paginatedTypes, ...$paginatedParams);
 }
 $stmt->execute();
 $result = $stmt->get_result();
@@ -84,8 +136,10 @@ $result = $stmt->get_result();
 // ============================
 // Output HTML rows
 // ============================
-$i = 1;
+$i = $offset + 1;
+$hasRows = false;
 while ($p = $result->fetch_assoc()):
+    $hasRows = true;
 ?>
 <tr>
   <td><?= $i++ ?></td>
@@ -112,4 +166,11 @@ while ($p = $result->fetch_assoc()):
     </button>
   </td>
 </tr>
-<?php endwhile; ?>
+<?php endwhile;
+
+if (!$hasRows): ?>
+<tr><td colspan="9" class="text-center">No projects found</td></tr>
+<?php endif; ?>
+
+<!-- Pagination data attribute for JS -->
+<tr class="pagination-data" style="display:none;" data-total="<?= $total ?>" data-page="<?= $page ?>" data-pages="<?= $totalPages ?>"></tr>

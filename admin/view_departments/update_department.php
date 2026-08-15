@@ -1,5 +1,13 @@
 <?php
+session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: ../login/");
+    exit();
+}
+
 require '../datacon.php';
+require '../csrf.php';
+require '../audit_log.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -7,6 +15,7 @@ use PHPMailer\PHPMailer\Exception;
 require '../../vendor/autoload.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validate_csrf();
 
     $id       = intval($_POST['id']);
     $dep_id   = trim($_POST['dep_id']);
@@ -37,11 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /** 3️⃣ If email changed → generate new password */
     if ($emailChanged) {
-        $plainPassword = substr(
-            str_shuffle("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"),
-            0,
-            8
-        );
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+        $plainPassword = '';
+        for ($i = 0; $i < 16; $i++) {
+            $plainPassword .= $chars[random_int(0, strlen($chars) - 1)];
+        }
         $hashedPassword = password_hash($plainPassword, PASSWORD_BCRYPT);
     }
 
@@ -130,10 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $mail->send();
             } catch (Exception $e) {
-                // Email failure shouldn't rollback DB changes
+                // Email failure shouldn't rollback DB changes, but log it
+                error_log("PHPMailer error (update_department): " . $e->getMessage());
             }
         }
 
+        audit_log($conn, 'department_updated', "Updated department: {$dep_name} (ID: {$dep_id})");
         echo "<script>alert('Department updated successfully'); window.location.href='index.php';</script>";
         exit();
 

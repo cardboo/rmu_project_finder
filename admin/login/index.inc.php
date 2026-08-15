@@ -19,21 +19,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $_SESSION['username'] = $row['username'];
             
 
-            // Alert success and redirect
-            echo "<script>
-                    alert('Login successful! Redirecting to dashboard...');
-                    window.location.href = '../dashboard/';
-                  </script>";
+            // Redirect to dashboard
+            header("Location: ../dashboard/");
+
             exit();
         } else {
             echo "<script>
-                    alert('Incorrect password.');
+                    alert('Invalid username or password.');
                     window.history.back();
                   </script>";
         }
     } else {
         echo "<script>
-                alert('Username not found.');
+                alert('Invalid username or password.');
                 window.history.back();
               </script>";
     }

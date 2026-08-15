@@ -10,17 +10,16 @@ if (!isset($_SESSION['username']) || !isset($_GET['id'])) {
 include "../datacon.php";
 
 $project_id = intval($_GET['id']);
-$dep_id = $_SESSION['dep_id']; // Example: "Dep 001"
 
 // ================================
 // 1. Fetch MAIN PROJECT DETAILS
 // ================================
 $stmt = $conn->prepare("
-    SELECT title, synopsis, year, status, file_path
+    SELECT title, synopsis, year, file_path
     FROM projects
-    WHERE id = ? AND dep_id = ?
+    WHERE id = ?
 ");
-$stmt->bind_param("is", $project_id, $dep_id);  // dep_id is VARCHAR
+$stmt->bind_param("i", $project_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -100,8 +99,7 @@ echo json_encode([
     'title'        => $project['title'],
     'synopsis'     => $project['synopsis'],
     'year'         => $project['year'],
-    'status'       => $project['status'],
-    'file_path'    => $project['file_path'],   // FIXED
+    'file_path'    => $project['file_path'],
     'supervisors'  => $supervisors,            // FIXED
     'members'      => $members,
     'tags'         => $tags
